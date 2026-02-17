@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="w-full bg-white border-b border-gray-200">
+    <header className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* LOGO */}
         <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
         {/* CTA BUTTON */}
         <div className="hidden lg:flex">
           <Link
-            href="#"
+            href="#contact"
             className="flex items-center gap-2 bg-[#C46A0A] text-white px-6 py-3 text-sm font-semibold hover:bg-[#a85908] transition"
           >
             ☎ GET STARTED
@@ -90,7 +90,7 @@ const Navbar: React.FC = () => {
             ))}
 
             <Link
-              href="#"
+              href="#contact"
               className="mt-4 bg-[#C46A0A] text-white px-6 py-3 text-sm font-semibold text-center"
               onClick={() => setOpen(false)}
             >

@@ -1,5 +1,5 @@
 import React from "react";
-
+import Link from "next/link";
 const Footer: React.FC = () => {
   return (
     <footer className="bg-[#0B0F1A] text-gray-300">
@@ -35,18 +35,20 @@ const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-3 text-sm">
               {[
-                "Vehicle Lifecycle",
-                "Servicing & Maintenance",
-                "Fleet Analytics",
-                "Compliance & Reporting",
-                "Fuel Management",
-                "Cleaning & Presentation",
+                { label: "Vehicle Lifecycle", href: "#services" },
+                { label: "Servicing & Maintenance", href: "#services" },
+                { label: "Fleet Analytics", href: "#services" },
+                { label: "Compliance & Reporting", href: "#services" },
+                { label: "Fuel Management", href: "#services" },
+                { label: "Cleaning & Presentation", href: "#services" },
               ].map((item) => (
-                <li
-                  key={item}
-                  className="hover:text-white transition cursor-pointer"
-                >
-                  {item}
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    className="hover:text-white transition"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -59,16 +61,18 @@ const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-3 text-sm">
               {[
-                "Essential Fleet Care",
-                "Optimised Fleet",
-                "Agency Fleet Partner",
-                "Optional Add-Ons",
+                { label: "Essential Fleet Care", href: "#packages" },
+                { label: "Optimised Fleet", href: "#packages" },
+                { label: "Agency Fleet Partner", href: "#packages" },
+                { label: "Optional Add-Ons", href: "#packages" },
               ].map((item) => (
-                <li
-                  key={item}
-                  className="hover:text-white transition cursor-pointer"
-                >
-                  {item}
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
+                    className="hover:text-white transition"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
