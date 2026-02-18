@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
       }}
     >
       {/* Dark Overlay */}
-      <div className="absolute inset-0  from-[#0B0F1A]/95 via-[#0B0F1A]/80 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0B0F1A]/90 via-[#0B0F1A]/80 to-[#0B0F1A]/40" />
 
       {/* Content Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 w-full">

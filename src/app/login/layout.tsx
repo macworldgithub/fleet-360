@@ -1,23 +1,31 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import Navbar from "@/src/components/layout/Navbar";
-import Footer from "@/src/components/layout/Footer";
-import "./globals.css";
+import "../globals.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
   variable: "--font-poppins",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: [
+    "100",
+    "200",
+    "300",
+    "400",
+    "500",
+    "600",
+    "700",
+    "800",
+    "900",
+  ],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Agency Garage - Fleet360 Fleet Services",
+  title: "Sign In — Fleet360",
   description:
-    "Australia's premier fleet management partner for real estate agencies.",
+    "Sign in to your Fleet360 agency dashboard to manage your fleet operations.",
 };
 
-export default function RootLayout({
+export default function LoginLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -25,9 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
-        <Navbar />
         {children}
-        <Footer />
       </body>
     </html>
   );
