@@ -37,11 +37,10 @@ const BuiltForRealEstate: FC = () => {
             {/* CTA Button */}
             <div className="pt-4">
               <Link
-                href="/packages"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#F59E0B] hover:bg-amber-500 text-white font-semibold text-base md:text-lg rounded-full transition-colors duration-300 shadow-md hover:shadow-lg"
+                href="#packages"
+                className="text-amber-400 hover:text-amber-500 font-medium text-base md:text-lg transition-colors duration-200"
               >
                 Explore Our Packages
-                <span aria-hidden="true">→</span>
               </Link>
             </div>
           </div>
