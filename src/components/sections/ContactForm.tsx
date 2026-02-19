@@ -39,7 +39,7 @@ export default function ContactForm() {
 
   return (
     <section id="contact" className="bg-[#F9F6F2]">
-      <div className="flex flex-col lg:flex-row max-w-7xl mx-auto">
+      <div className="flex flex-col lg:flex-row max-w-7xl mx-auto pb-12">
         {/* Left - Hero Text */}
         <div className="w-full lg:w-5/12 bg-[#0B0F1A] p-12 lg:p-20 flex flex-col justify-center text-white">
           <div className="mb-12">
