@@ -21,48 +21,40 @@ const stats = [
 
 const Philosophy: React.FC = () => {
   return (
-    <section className="bg-[#F4F1EC] py-20 lg:py-28">
-      <div className="max-w-6xl mx-auto px-6 text-center">
-        {/* Small Heading */}
-        <div className="flex items-center justify-center gap-4 mb-10">
-          <span className="w-12  bg-[#C46A0A]" />
-          <p className="text-xs tracking-[0.4em] text-[#C46A0A] uppercase">
-            Our Philosophy
+    <section className="bg-[#F9F6F2] py-20 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 text-center">
+        {/* Small Label */}
+        <div className="flex items-center justify-center gap-4 mb-12">
+          <span className="w-16 h-[1px] bg-[#C46A0A]" />
+          <p className="text-[11px] tracking-[0.3em] text-[#C46A0A] uppercase font-bold">
+            OUR PHILOSOPHY
           </p>
-          <span className="w-12 bg-[#C46A0A]" />
+          <span className="w-16 h-[1px] bg-[#C46A0A]" />
         </div>
 
         {/* Main Quote */}
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl italic font-medium text-[#1A1A1A] leading-relaxed max-w-4xl mx-auto">
-          “We don't just manage vehicles — we bundle, optimise, and simplify
-          everything related to running cars in a real estate business.”
+        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[48px] font-serif italic text-[#1A1A1A] leading-relaxed max-w-5xl mx-auto">
+          "We don't just manage vehicles — we bundle, optimise, and simplify
+          everything related to running cars in a real estate business."
         </h2>
 
         {/* Description */}
-        <p className="mt-8 text-gray-600 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+        <p className="mt-10 text-gray-500 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed font-light">
           From registration and servicing to fuel tracking and resale — Agency
           Garage replaces five or six separate suppliers with one seamless
           partnership, one monthly fee, and one clear view of your entire fleet.
         </p>
 
         {/* Stats Section */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-y-12 md:gap-y-0">
-          {stats.map((item, index) => (
-            <div
-              key={item.label}
-              className="flex flex-col items-center relative"
-            >
-              <p className="text-3xl md:text-4xl font-semibold text-[#C46A0A]">
+        <div className="mt-24 grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+          {stats.map((item) => (
+            <div key={item.label} className="flex flex-col items-center py-8 md:py-0 px-4">
+              <p className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#C46A0A] mb-4">
                 {item.value}
               </p>
-              <p className="mt-3 text-xs tracking-[0.3em] text-gray-500">
+              <p className="text-[10px] md:text-xs tracking-[0.2em] text-gray-500 uppercase font-medium">
                 {item.label}
               </p>
-
-              {/* Divider (desktop only) */}
-              {index !== stats.length - 1 && (
-                <span className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 h-16 bg-gray-300" />
-              )}
             </div>
           ))}
         </div>

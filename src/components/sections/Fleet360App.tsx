@@ -1,33 +1,34 @@
 import type { FC } from "react";
+import Image from "next/image";
 
 const features = [
   {
-    icon: "📊",
+    icon: "/images/Reporting.svg",
     title: "Cost Analytics",
     desc: "Track spend trends across your entire fleet",
   },
   {
-    icon: "🔔",
+    icon: "/images/Servicing.svg",
     title: "Smart Alerts",
     desc: "Service, rego, and upgrade reminders",
   },
   {
-    icon: "📍",
+    icon: "/images/fleet.svg",
     title: "Vehicle Tracking",
     desc: "Real-time status of every vehicle",
   },
   {
-    icon: "⚡",
+    icon: "/images/Fuel & usage.svg",
     title: "Performance",
     desc: "KM efficiency and usage reporting",
   },
   {
-    icon: "🛡️",
+    icon: "/images/Registration.svg",
     title: "Compliance",
     desc: "ATO-compliant logbook and reporting",
   },
   {
-    icon: "🤖",
+    icon: "/images/Driver.svg",
     title: "AI Insights",
     desc: "Data-driven fleet recommendations",
   },
@@ -35,24 +36,25 @@ const features = [
 
 const Fleet360App: FC = () => {
   return (
-    <section
-      id="app"
-      className="bg-gray-900 text-white py-16 md:py-20 lg:py-24"
-    >
+    <section id="app" className="bg-[#0B0F1A] text-white py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center lg:text-left mb-12 md:mb-16">
-          <p className="text-amber-500 uppercase tracking-wider font-semibold text-sm md:text-base mb-3">
-            ── FLEET360 APP ──
-          </p>
+        <div className="text-center lg:text-left mb-16">
+          <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
+            <span className="w-12 h-[1px] bg-[#C46A0A]" />
+            <p className="text-[#C46A0A] uppercase tracking-[0.2em] text-[11px] font-bold">
+              FLEET360 APP
+            </p>
+          </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold leading-tight">
-            Your Entire Fleet,
-            <br className="hidden sm:block" />
-            <span className="text-amber-500">At a Glance</span>
+          <h2 className="text-5xl sm:text-6xl font-serif font-bold leading-tight mb-8">
+            Your Entire Fleet,{" "}
+            <span className="text-[#C46A0A] italic font-serif">
+              At a Glance
+            </span>
           </h2>
 
-          <p className="mt-6 text-base sm:text-lg md:text-xl text-gray-300 max-w-4xl mx-auto lg:mx-0 leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 max-w-3xl leading-relaxed font-light">
             The Fleet360 app gives principals and agents complete visibility
             over vehicle status, costs, and compliance — from a single
             dashboard. Every package includes app access, with premium tiers
@@ -60,19 +62,31 @@ const Fleet360App: FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 xl:gap-20">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* Left side - Features list */}
-          <div className="w-full lg:w-5/12 xl:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          <div className="w-full lg:w-5/12 grid grid-cols-1 sm:grid-cols-2 gap-10">
             {features.map((feature, idx) => (
-              <div key={idx} className="flex items-start gap-4 group">
-                <div className="text-3xl sm:text-4xl text-amber-500 mt-1 flex-shrink-0 transition-transform group-hover:scale-110 duration-300">
-                  {feature.icon}
+              <div key={idx} className="flex gap-4 group">
+                <div className="flex-shrink-0 mt-1">
+                  <div
+                    className="w-6 h-6 bg-[#C46A0A]"
+                    style={{
+                      maskImage: `url('${feature.icon}')`,
+                      WebkitMaskImage: `url('${feature.icon}')`,
+                      maskSize: "contain",
+                      WebkitMaskSize: "contain",
+                      maskRepeat: "no-repeat",
+                      WebkitMaskRepeat: "no-repeat",
+                      maskPosition: "center",
+                      WebkitMaskPosition: "center",
+                    }}
+                  />
                 </div>
                 <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-1.5">
+                  <h3 className="text-base font-bold text-white mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
                     {feature.desc}
                   </p>
                 </div>
@@ -81,26 +95,17 @@ const Fleet360App: FC = () => {
           </div>
 
           {/* Right side - Image / Mockup */}
-          <div className="w-full lg:w-7/12 xl:w-1/2">
-            <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-gray-800">
+          <div className="w-full lg:w-7/12">
+            <div className="relative">
               <img
-                src="/images/fleet360.jpg" // ← replace with your actual image path
-                alt="Fleet360 app dashboard showing analytics, map, cost graphs on large monitor"
-                className="w-full h-auto object-cover transition-transform duration-500 hover:scale-[1.02]"
+                src="/images/fleet360.jpg"
+                alt="Fleet360 app dashboard"
+                className="w-full h-auto object-cover shadow-2xl"
                 loading="lazy"
-                width={1200}
-                height={800}
               />
-
-              {/* Optional subtle overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              {/* Corner accent border */}
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 border-b-2 border-l-2 border-[#C46A0A]/30" />
             </div>
-
-            {/* Small hint text under image (optional) */}
-            <p className="text-center text-gray-500 text-sm mt-4 lg:mt-6">
-              Real-time dashboard • Cost analytics • Vehicle map • AI
-              recommendations
-            </p>
           </div>
         </div>
       </div>

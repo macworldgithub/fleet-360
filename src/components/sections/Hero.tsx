@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { ShieldCheck, Clock, TrendingUp } from "lucide-react";
 
 const Hero: React.FC = () => {
   return (
@@ -15,62 +16,54 @@ const Hero: React.FC = () => {
       }}
     >
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0B0F1A]/90 via-[#0B0F1A]/80 to-[#0B0F1A]/40" />
+      <div className="absolute inset-0 bg-[#0B0F1A]/85" />
 
       {/* Content Container */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 w-full">
-        {/* Small Label */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="w-10 bg-[#C97A1C]" />
-          <p className="text-md tracking-[0.3em] text-[#C97A1C] uppercase font-extrabold">
-            Real Estate Fleet Partner
-          </p>
-        </div>
-
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-32 w-full">
         {/* Heading */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight max-w-4xl">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[84px] font-serif font-bold leading-[1.1] max-w-5xl tracking-tight">
           Your Fleet,{" "}
-          <span className="text-[#E29A5F] italic font-medium">Simplified.</span>
+          <span className="text-[#C46A0A] italic font-serif">Simplified.</span>
         </h1>
 
         {/* Description */}
-        <p className="mt-6 text-base sm:text-lg text-white max-w-2xl leading-relaxed">
+        <p className="mt-8 text-lg sm:text-xl md:text-2xl text-gray-200 max-w-2xl leading-relaxed font-light">
           We bundle, optimise, and simplify everything related to running
           vehicles in a real estate business. One partner instead of five
           suppliers.
         </p>
 
         {/* Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row gap-4">
+        <div className="mt-12 flex flex-col sm:flex-row gap-5">
           <Link
-            href="#"
-            className="bg-[#C97A1C] hover:bg-[#b96d17] transition px-8 py-4 text-sm font-semibold tracking-wide"
+            href="#packages"
+            className="bg-[#C46A0A] hover:bg-[#a85908] transition px-10 py-4 text-xs sm:text-sm font-bold tracking-[0.15em] uppercase rounded-sm text-center"
           >
             VIEW PACKAGES
           </Link>
 
           <Link
-            href="#"
-            className="border border-gray-400 hover:border-white hover:text-white transition px-8 py-4 text-sm font-semibold tracking-wide"
+            href="#services"
+            className="border border-white/30 hover:bg-white hover:text-black transition px-10 py-4 text-xs sm:text-sm font-bold tracking-[0.15em] uppercase rounded-sm text-center backdrop-blur-sm"
           >
             OUR SERVICES
           </Link>
         </div>
 
         {/* Bottom Features */}
-        <div className="mt-16 flex flex-col sm:flex-row gap-8 text-sm text-white">
+        <div className="mt-20 flex flex-col sm:flex-row gap-8 sm:gap-12 text-sm sm:text-base font-medium text-white/90">
           <div className="flex items-center gap-3">
-            <span className="text-[#C97A1C]">🛡</span>
+            <ShieldCheck className="w-6 h-6 text-[#C46A0A]" />
             <p>One Monthly Fee</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-[#C97A1C]">⏱</span>
+            <Clock className="w-6 h-6 text-[#C46A0A]" />
             <p>Less Admin</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-[#C97A1C]">📈</span>
+            <TrendingUp className="w-6 h-6 text-[#C46A0A]" />
             <p>Better Decisions</p>
           </div>
         </div>

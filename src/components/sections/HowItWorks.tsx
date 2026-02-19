@@ -29,46 +29,46 @@ const steps: Step[] = [
 
 const HowItWorks: React.FC = () => {
   return (
-    <section className="bg-white py-20 lg:py-28">
-      <div className="max-w-6xl mx-auto px-6 text-center">
+    <section className="bg-white py-24 lg:py-32">
+      <div className="max-w-7xl mx-auto px-6 text-center">
         {/* Section Label */}
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <span className="w-12 bg-[#C46A0A]" />
-          <p className="text-xs tracking-[0.4em] text-[#C46A0A] uppercase">
-            How It Works
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <span className="w-16 h-[1px] bg-[#C9C5BF]" />
+          <p className="text-[11px] tracking-[0.3em] text-[#888] uppercase font-semibold">
+            HOW IT WORKS
           </p>
-          <span className="w-12 bg-[#C46A0A]" />
+          <span className="w-16 h-[1px] bg-[#C9C5BF]" />
         </div>
 
         {/* Heading */}
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-[#1A1A1A] mb-20">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-[#1A1A1A] mb-24">
           Getting Started is{" "}
-          <span className="italic text-[#C46A0A] font-medium">Simple</span>
+          <span className="italic font-serif text-[#C46A0A]">Simple</span>
         </h2>
 
         {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
           {steps.map((step, index) => (
-            <div key={step.number} className="relative">
+            <div key={step.number} className="relative group">
+              {/* Connector Line (Desktop only) */}
+              {index < steps.length - 1 && (
+                <div className="hidden md:block absolute top-[2rem] left-[50%] w-full h-[1px] bg-gray-200 -z-10" />
+              )}
+
               {/* Step Number */}
               <div className="flex justify-center mb-8">
-                <div className="w-16 h-16 flex items-center justify-center border border-gray-300 text-[#C46A0A] font-semibold text-lg bg-[#F9F6F2]">
+                <div className="w-16 h-16 flex items-center justify-center bg-[#F9F6F2] text-[#C46A0A] font-serif font-bold text-xl rounded-sm">
                   {step.number}
                 </div>
               </div>
 
-              {/* Connector Line (Desktop only) */}
-              {index < steps.length - 1 && (
-                <span className="hidden md:block absolute top-8 right-[-50%] w-full bg-gray-300" />
-              )}
-
               {/* Title */}
-              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-4">
+              <h3 className="text-2xl font-serif font-bold text-[#1A1A1A] mb-4">
                 {step.title}
               </h3>
 
               {/* Description */}
-              <p className="text-gray-600 text-sm leading-relaxed max-w-xs mx-auto">
+              <p className="text-gray-500 text-sm leading-7 max-w-xs mx-auto font-light">
                 {step.description}
               </p>
             </div>

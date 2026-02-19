@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import Image from "next/image";
 
 interface ServiceItem {
   icon: string;
@@ -8,49 +9,49 @@ interface ServiceItem {
 
 const services: ServiceItem[] = [
   {
-    icon: "🚗",
+    icon: "/images/Vehicle Lifecycle.svg",
     title: "Vehicle Lifecycle",
     description:
       "Buy, run, upgrade, sell — we oversee every stage of your vehicle’s life so you never miss a beat.",
   },
   {
-    icon: "🔧",
+    icon: "/images/Servicing.svg",
     title: "Servicing & Maintenance",
     description:
       "Coordinated servicing through preferred providers, mobile mechanics, and proactive scheduling.",
   },
   {
-    icon: "🛡️",
+    icon: "/images/Registration.svg",
     title: "Registration & Compliance",
     description:
       "Registration management, reminders, and ATO-compliant mobile logbook tracking.",
   },
   {
-    icon: "⛽",
+    icon: "/images/Registration.svg",
     title: "Fuel & Usage Tracking",
     description:
       "Fuel spend monitoring, KM efficiency reporting, and automated private vs business split.",
   },
   {
-    icon: "📊",
+    icon: "/images/Reporting.svg",
     title: "Reporting & Analytics",
     description:
       "Centralised invoicing, cost benchmarking, lifecycle reporting, and accountant-friendly exports.",
   },
   {
-    icon: "💳",
+    icon: "/images/Payments.svg",
     title: "Payments & Rewards",
     description:
       "Direct debit, credit card (Amex accepted), and earn rewards points on your fleet spend.",
   },
   {
-    icon: "🧼",
+    icon: "/images/fleet.svg",
     title: "Cleaning & Presentation",
     description:
       "Scheduled wash programs and enhanced detailing to keep your brand looking sharp on the road.",
   },
   {
-    icon: "📱",
+    icon: "/images/Payments.svg",
     title: "Fleet App",
     description:
       "Real-time dashboard, vehicle status, cost tracking, alerts, and AI-driven recommendations.",
@@ -59,31 +60,40 @@ const services: ServiceItem[] = [
 
 const ServicesGrid: FC = () => {
   return (
-    <section className="bg-white py-16 md:py-20 lg:py-20">
-      <div className="mx-auto w-full px-5 sm:px-6 lg:px-8">
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
+    <section className="bg-[#F9F9F9] py-16 md:py-20">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {services.map((service, index) => (
             <div
               key={index}
-              className="group bg-white rounded-2xl transition-all duration-300 overflow-hidden border border-gray-300 flex flex-col h-full"
+              className="bg-white border border-[#E6E6E6] p-8 transition-all duration-300 hover:shadow-md"
             >
-              <div className="p-6 md:p-8 flex flex-col">
-                {/* Icon */}
-                <div className="text-4xl md:text-5xl mb-5 md:mb-6 text-amber-500">
-                  {service.icon}
-                </div>
-
-                {/* Title */}
-                <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-3 md:mb-4">
-                  {service.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-                  {service.description}
-                </p>
+              {/* Icon */}
+              <div className="mb-6">
+                <div
+                  className="w-7 h-7 bg-[#C46A0A]"
+                  style={{
+                    maskImage: `url('${service.icon}')`,
+                    WebkitMaskImage: `url('${service.icon}')`,
+                    maskSize: "contain",
+                    WebkitMaskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskPosition: "center",
+                  }}
+                />
               </div>
+
+              {/* Title */}
+              <h3 className="text-[20px] leading-snug font-semibold text-[#1F1F1F] mb-4">
+                {service.title}
+              </h3>
+
+              {/* Description */}
+              <p className="text-[15px] leading-relaxed text-[#5F5F5F]">
+                {service.description}
+              </p>
             </div>
           ))}
         </div>

@@ -41,61 +41,64 @@ const benefits = [
 
 const WhyAgencyGarage: FC = () => {
   return (
-    <section id="why-us" className="bg-[#f8f9fa] py-16 md:py-20 lg:py-24">
+    <section id="why-us" className="bg-[#F9F6F2] py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 xl:gap-20">
+        <div className="flex flex-col lg:flex-row gap-20">
           {/* Left column: header + description + image */}
-          <div className="w-full lg:w-1/2 space-y-8 lg:space-y-10">
+          <div className="w-full lg:w-5/12 space-y-12">
             {/* Header & subtext */}
             <div className="text-center lg:text-left">
-              <p className="text-amber-600 uppercase tracking-wider font-semibold text-sm md:text-base mb-3">
-                ── WHY AGENCY GARAGE ──
-              </p>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                Built for the Way
-                <span className="text-amber-600"> You Work</span>
+              <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
+                <span className="w-12 h-[1px] bg-[#C46A0A]" />
+                <p className="text-[#C46A0A] uppercase tracking-[0.2em] text-[11px] font-bold">
+                  WHY AGENCY GARAGE
+                </p>
+              </div>
+              <h2 className="text-5xl md:text-[52px] font-serif font-bold text-[#1A1A1A] leading-[1.1]">
+                Built for the Way{" "}
+                <span className="text-[#C46A0A] italic font-serif">
+                  You Work
+                </span>
               </h2>
-              <p className="mt-5 text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
+              <p className="mt-8 text-base text-gray-500 leading-relaxed font-light">
                 Real estate agencies have unique fleet demands — high visibility
                 vehicles, tight schedules, and brand reputation on the line
                 every day. We built Agency Garage specifically for this reality.
               </p>
             </div>
 
-            {/* Image with orange accent frame (like screenshot) */}
-            <div className="relative rounded-2xl overflow-hidden border-4 border-amber-500/30 shadow-xl">
+            {/* Image */}
+            <div className="relative">
+              {/* Top Left Corner Accent */}
+              <div className="absolute -top-6 -left-6 w-24 h-24 border-t-2 border-l-2 border-[#C46A0A]/50 hidden lg:block" />
               <img
                 src="/images/agency.jpg"
-                alt="Aerial view of neatly parked real estate agency vehicles"
-                className="w-full h-90 object-cover transition-transform duration-500 hover:scale-[1.02]"
+                alt="Aerial view of Agency Garage fleet"
+                className="w-full h-auto object-cover shadow-xl"
                 loading="lazy"
-                width={800}
-                height={600}
               />
-              {/* Subtle inner white frame like screenshot style */}
-              <div className="absolute inset-3 border border-white/60 pointer-events-none rounded-lg" />
             </div>
           </div>
 
-          {/* Right column: numbered list with separators */}
-          <div className="w-full lg:w-1/2">
-            <div className="divide-y divide-gray-200">
+          {/* Right column: numbered list */}
+          <div className="w-full lg:w-7/12">
+            <div className="divide-y divide-gray-200/60">
               {benefits.map((benefit) => (
                 <div
                   key={benefit.number}
-                  className="py-4 md:py-4 first:pt-0 last:pb-0 flex items-start gap-5 md:gap-6"
+                  className="py-10 first:pt-0 last:pb-0 flex items-start gap-12"
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-100 text-amber-700 font-bold text-lg md:text-xl flex items-center justify-center border-2 border-amber-300">
+                    <span className="text-3xl font-serif font-bold text-[#e8dac9]">
                       {benefit.number}
-                    </div>
+                    </span>
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="text-md md:text-lg lg:text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-serif font-bold text-[#1A1A1A] mb-3">
                       {benefit.title}
                     </h3>
-                    <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+                    <p className="text-gray-500 text-sm leading-relaxed font-light">
                       {benefit.description}
                     </p>
                   </div>

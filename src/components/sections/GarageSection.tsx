@@ -2,25 +2,26 @@ import type { FC } from "react";
 
 const AgencyGarageSection: FC = () => {
   return (
-    <section id="services" className="bg-white py-16 md:py-20 lg:py-24">
+    <section id="services" className="bg-white py-20 lg:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="mb-10 md:mb-16 lg:mb-6 text-center md:text-left">
-          <p className="text-[#F59E0B] uppercase tracking-wide font-medium text-sm md:text-base mb-3 md:mb-4">
-            — WHAT WE DO
-          </p>
-
-          <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-4xl font-bold text-gray-900 leading-tight">
-            Everything Your Fleet Needs,
-            <br className="hidden sm:block" />
-            <span className="text-[#F59E0B]">Under One Roof</span>
-          </h2>
-        </div>
-
-        {/* Main content - flex on md+ screens */}
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           {/* Text block */}
-          <div className="w-full lg:w-1/2 space-y-6 lg:space-y-8 text-center lg:text-left">
-            <p className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
+          <div className="w-full lg:w-1/2 text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start gap-4 mb-8">
+              <span className="w-12 h-[1px] bg-[#C46A0A]" />
+              <p className="text-[11px] tracking-[0.3em] text-[#C46A0A] uppercase font-bold">
+                WHAT WE DO
+              </p>
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl md:text-[56px] font-serif font-bold text-[#1A1A1A] leading-[1.1] mb-8">
+              Everything Your Fleet Needs,{" "}
+              <span className="font-serif italic text-[#C46A0A]">
+                Under One Roof
+              </span>
+            </h2>
+
+            <p className="text-lg md:text-xl text-gray-500 leading-relaxed font-light">
               From the moment a vehicle joins your agency to the day it's sold
               or replaced, Agency Garage handles every detail. We coordinate
               servicing, track costs, manage compliance, and keep your fleet
@@ -30,16 +31,15 @@ const AgencyGarageSection: FC = () => {
 
           {/* Image block */}
           <div className="w-full lg:w-1/2">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative">
               <img
                 src="/images/mechanic.jpg"
                 alt="Mechanic working on agency vehicle in professional setting"
-                className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
+                className="w-full h-auto object-cover"
                 loading="lazy"
               />
-
-              {/* Optional subtle overlay gradient */}
-              <div className="absolute inset-0 from-black/30 via-transparent to-transparent opacity-60 pointer-events-none" />
+              {/* Corner accent border */}
+              <div className="hidden lg:block absolute -bottom-6 -right-6 w-24 h-24 border-b-2 border-r-2 border-[#E29A5F]" />
             </div>
           </div>
         </div>
