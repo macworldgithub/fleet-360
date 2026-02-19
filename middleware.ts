@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
 
     // Allow public routes and static assets
     if (
+        pathname === "/" || // Allow root path
         PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) ||
         pathname.startsWith("/_next") ||
         pathname.startsWith("/api") ||
@@ -21,10 +22,13 @@ export function middleware(request: NextRequest) {
     // Check for auth token
     const accessToken = request.cookies.get("accessToken")?.value;
 
+    // For now, disabling the redirect to login as requested (commenting out)
+    /*
     if (!accessToken) {
         const loginUrl = new URL("/login", request.url);
         return NextResponse.redirect(loginUrl);
     }
+    */
 
     return NextResponse.next();
 }
