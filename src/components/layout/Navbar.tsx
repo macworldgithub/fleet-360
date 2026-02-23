@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Phone } from "lucide-react";
+import { Phone, LogIn } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -46,8 +46,15 @@ const Navbar: React.FC = () => {
           ))}
         </nav>
 
-        {/* CTA BUTTON */}
-        <div className="hidden lg:flex">
+        {/* CTA BUTTONS */}
+        <div className="hidden lg:flex items-center gap-3">
+          <Link
+            href="/sign-in"
+            className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-8 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
+          >
+            <LogIn className="w-4 h-4" />
+            SIGN IN
+          </Link>
           <Link
             href="#contact"
             className="flex items-center gap-2 bg-[#C46A0A] text-white px-8 py-3.5 text-xs font-bold tracking-widest hover:bg-[#a85908] transition uppercase rounded-sm"
@@ -94,8 +101,17 @@ const Navbar: React.FC = () => {
             ))}
 
             <Link
+              href="/sign-in"
+              className="mt-4 flex items-center justify-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#C46A0A] hover:text-white transition"
+              onClick={() => setOpen(false)}
+            >
+              <LogIn className="w-4 h-4" />
+              SIGN IN
+            </Link>
+
+            <Link
               href="#contact"
-              className="mt-4 flex items-center justify-center gap-2 bg-[#C46A0A] text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#a85908] transition"
+              className="flex items-center justify-center gap-2 bg-[#C46A0A] text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#a85908] transition"
               onClick={() => setOpen(false)}
             >
               <Phone className="w-4 h-4 fill-white" />
