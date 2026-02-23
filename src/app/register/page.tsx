@@ -35,6 +35,7 @@ export default function RegisterPage() {
     country: "Australia",
     state: "",
     city: "",
+    role: "PRINCIPAL", // default role
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -371,6 +372,66 @@ export default function RegisterPage() {
                     className={inputBase}
                     required
                   />
+                </div>
+                {/* Role Selection */}
+                <div>
+                  <label className={labelBase}>Register As</label>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* PRINCIPAL */}
+                    <label
+                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all backdrop-blur-sm
+      ${
+        form.role === "PRINCIPAL"
+          ? "border-amber-500 bg-amber-500/10"
+          : "border-white/10 bg-white/5 hover:border-amber-500/40"
+      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="PRINCIPAL"
+                        checked={form.role === "PRINCIPAL"}
+                        onChange={handleChange}
+                        className="accent-amber-500"
+                      />
+                      <div>
+                        <p className="text-sm text-white font-semibold">
+                          Principal
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Agency owner or administrator
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* FLEET MANAGER */}
+                    <label
+                      className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all backdrop-blur-sm
+      ${
+        form.role === "FLEET_MANAGER"
+          ? "border-amber-500 bg-amber-500/10"
+          : "border-white/10 bg-white/5 hover:border-amber-500/40"
+      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="FLEET_MANAGER"
+                        checked={form.role === "FLEET_MANAGER"}
+                        onChange={handleChange}
+                        className="accent-amber-500"
+                      />
+                      <div>
+                        <p className="text-sm text-white font-semibold">
+                          Fleet Manager
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Manage vehicles & operations
+                        </p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Next button */}

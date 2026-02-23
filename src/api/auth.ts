@@ -10,6 +10,7 @@ export interface RegisterAgencyPayload {
   country: string;
   state: string;
   city: string;
+  role: "PRINCIPAL" | "FLEET_MANAGER";
 }
 
 export interface RegisterAgencyResponse {
