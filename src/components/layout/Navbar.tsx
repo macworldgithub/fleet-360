@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
         {/* CTA BUTTONS */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="/sign-in"
+            href="/login"
             className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-8 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
           >
             <LogIn className="w-4 h-4" />
