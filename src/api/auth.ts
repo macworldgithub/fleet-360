@@ -49,6 +49,7 @@ export async function registerAgency(
 export interface LoginPayload {
   contactEmail: string;
   password: string;
+  role: "PRINCIPAL" | "FLEET_MANAGER";
 }
 
 export interface AgencyInfo {

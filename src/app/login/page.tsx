@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [form, setForm] = useState<LoginPayload>({
     contactEmail: "",
     password: "",
+    role: "PRINCIPAL", // default selected
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -303,6 +304,43 @@ export default function LoginPage() {
                       </svg>
                     )}
                   </button>
+                </div>
+              </div>
+
+              {/* Role Selection */}
+              <div>
+                <label className={labelBase}>Login As</label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* PRINCIPAL */}
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer hover:border-amber-500/40 transition">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="PRINCIPAL"
+                      checked={form.role === "PRINCIPAL"}
+                      onChange={handleChange}
+                      className="accent-amber-500"
+                    />
+                    <span className="text-sm text-gray-300 font-medium">
+                      PRINCIPAL
+                    </span>
+                  </label>
+
+                  {/* FLEET_MANAGER */}
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5 cursor-pointer hover:border-amber-500/40 transition">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="FLEET_MANAGER"
+                      checked={form.role === "FLEET_MANAGER"}
+                      onChange={handleChange}
+                      className="accent-amber-500"
+                    />
+                    <span className="text-sm text-gray-300 font-medium">
+                      FLEET MANAGER
+                    </span>
+                  </label>
                 </div>
               </div>
 
