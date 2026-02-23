@@ -88,34 +88,92 @@ export async function loginAgency(
   return res.json();
 }
 
-/* ──────────────── Token helpers (cookie-based) ──────────────── */
+/* ──────────────── Token helpers (localStorage-based) ──────────────── */
+
+import React from "react";
 
 export function setAuthTokens(data: LoginResponse) {
-  // Store tokens + agency info in cookies (accessible by middleware)
-  document.cookie = `accessToken=${data.accessToken}; path=/; max-age=900; SameSite=Lax`;
-  document.cookie = `refreshToken=${data.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
-  document.cookie = `agency=${encodeURIComponent(JSON.stringify(data.agency))}; path=/; max-age=604800; SameSite=Lax`;
+  // Store tokens + agency info in localStorage
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("refreshToken", data.refreshToken);
+    localStorage.setItem("agency", JSON.stringify(data.agency));
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event("auth:updated"));
+  }
 }
 
 export function getAccessToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
-  return match ? match[1] : null;
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  return localStorage.getItem("accessToken");
 }
 
 export function getAgencyInfo(): AgencyInfo | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)agency=([^;]*)/);
-  if (!match) return null;
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  const agencyStr = localStorage.getItem("agency");
+  if (!agencyStr) return null;
   try {
-    return JSON.parse(decodeURIComponent(match[1]));
+    return JSON.parse(agencyStr);
   } catch {
     return null;
   }
 }
 
 export function clearAuthTokens() {
-  document.cookie = "accessToken=; path=/; max-age=0";
-  document.cookie = "refreshToken=; path=/; max-age=0";
-  document.cookie = "agency=; path=/; max-age=0";
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("agency");
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event("auth:updated"));
+  }
+}
+
+/* ──────────────── useAuth React Hook ──────────────── */
+
+export function useAuth() {
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [agency, setAgency] = React.useState<AgencyInfo | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Check initial auth state
+    const checkAuth = () => {
+      const token = getAccessToken();
+      const agencyInfo = getAgencyInfo();
+      setIsAuthenticated(!!token && !!agencyInfo);
+      setAgency(agencyInfo);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const handleAuthUpdate = () => {
+      checkAuth();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:updated", handleAuthUpdate);
+      window.addEventListener("storage", handleAuthUpdate);
+
+      return () => {
+        window.removeEventListener("auth:updated", handleAuthUpdate);
+        window.removeEventListener("storage", handleAuthUpdate);
+      };
+    }
+  }, []);
+
+  const logout = () => {
+    clearAuthTokens();
+    setIsAuthenticated(false);
+    setAgency(null);
+  };
+
+  return {
+    isAuthenticated,
+    agency,
+    isLoading,
+    logout,
+  };
 }

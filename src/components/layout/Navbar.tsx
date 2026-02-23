@@ -2,10 +2,21 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Phone, LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Phone, LogIn, User, LogOut } from "lucide-react";
+import { useAuth } from "@/src/api/auth";
 
 const Navbar: React.FC = () => {
+  const router = useRouter();
+  const { isAuthenticated, agency, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    router.push("/");
+  };
 
   const navLinks = [
     { label: "SERVICES", href: "#services" },
@@ -49,19 +60,59 @@ const Navbar: React.FC = () => {
         {/* CTA BUTTONS */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
-            href="/login"
-            className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-8 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
-          >
-            <LogIn className="w-4 h-4" />
-            SIGN IN
-          </Link>
-          <Link
             href="#contact"
             className="flex items-center gap-2 bg-[#C46A0A] text-white px-8 py-3.5 text-xs font-bold tracking-widest hover:bg-[#a85908] transition uppercase rounded-sm"
           >
             <Phone className="w-4 h-4 fill-white" />
             GET STARTED
           </Link>
+
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-[#C46A0A] text-white hover:bg-[#a85908] transition"
+                title={agency?.agencyName}
+              >
+                <User className="w-5 h-5" />
+              </button>
+
+              {/* Profile dropdown */}
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {agency?.agencyName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {agency?.contactEmail}
+                    </p>
+
+                    <p className="text-xs text-gray-500 mt-1">Offices</p>
+
+                    <p className="text-xs text-gray-500 mt-1">Agencies</p>
+
+                    <p className="text-xs text-gray-500 mt-1">Vehicles</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition border-t border-gray-200"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-8 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
+            >
+              <LogIn className="w-4 h-4" />
+              SIGN IN
+            </Link>
+          )}
         </div>
 
         {/* MOBILE MENU BUTTON */}
@@ -101,15 +152,6 @@ const Navbar: React.FC = () => {
             ))}
 
             <Link
-              href="/sign-in"
-              className="mt-4 flex items-center justify-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#C46A0A] hover:text-white transition"
-              onClick={() => setOpen(false)}
-            >
-              <LogIn className="w-4 h-4" />
-              SIGN IN
-            </Link>
-
-            <Link
               href="#contact"
               className="flex items-center justify-center gap-2 bg-[#C46A0A] text-white px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#a85908] transition"
               onClick={() => setOpen(false)}
@@ -117,6 +159,38 @@ const Navbar: React.FC = () => {
               <Phone className="w-4 h-4 fill-white" />
               GET STARTED
             </Link>
+
+            {isAuthenticated ? (
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {agency?.agencyName}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {agency?.contactEmail}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-red-700 transition rounded-sm"
+                >
+                  <LogOut className="w-4 h-4" />
+                  SIGN OUT
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center justify-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#C46A0A] hover:text-white transition"
+                onClick={() => setOpen(false)}
+              >
+                <LogIn className="w-4 h-4" />
+                SIGN IN
+              </Link>
+            )}
           </div>
         </div>
       )}
