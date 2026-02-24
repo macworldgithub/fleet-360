@@ -87,12 +87,12 @@ const Navbar: React.FC = () => {
                     <p className="text-xs text-gray-500 mt-1">
                       {agency?.contactEmail}
                     </p>
-
-                    <p className="text-xs text-gray-500 mt-1">Offices</p>
-
-                    <p className="text-xs text-gray-500 mt-1">Agencies</p>
-
-                    <p className="text-xs text-gray-500 mt-1">Vehicles</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Role: <span className="font-medium text-gray-900">{agency?.role}</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
+                    </p>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -168,6 +168,12 @@ const Navbar: React.FC = () => {
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {agency?.contactEmail}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Role: <span className="font-medium text-gray-900">{agency?.role}</span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
                   </p>
                 </div>
                 <button

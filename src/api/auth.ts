@@ -57,6 +57,7 @@ export interface AgencyInfo {
   id: string;
   agencyName: string;
   contactEmail: string;
+  role: "PRINCIPAL" | "FLEET_MANAGER";
   subscriptionTier: string;
 }
 
@@ -85,7 +86,16 @@ export async function loginAgency(
     throw errorData;
   }
 
-  return res.json();
+  const data: LoginResponse = await res.json();
+  
+  // Validate that login role matches the agency's registered role
+  if (data.agency.role !== payload.role) {
+    throw {
+      message: `Invalid role. This agency is registered as ${data.agency.role}. You cannot login as ${payload.role}.`,
+    } as ApiError;
+  }
+
+  return data;
 }
 
 /* ──────────────── Token helpers (localStorage-based) ──────────────── */
