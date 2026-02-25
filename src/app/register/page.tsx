@@ -60,13 +60,11 @@ export default function RegisterPage() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-
   const goToStep2 = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setStep(2);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -106,7 +104,7 @@ export default function RegisterPage() {
   const labelBase =
     "block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2";
 
-  /* ────────────────────── success screen ────────────────────── */
+  /* ────────────────────── success screen ──────────────────── */
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0B0F1A] via-[#111827] to-[#0B0F1A] p-4">

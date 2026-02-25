@@ -1,0 +1,144 @@
+"use client";
+
+import React, { useState } from "react";
+import { 
+  Building2, 
+  Car, 
+  MapPin, 
+  Menu, 
+  X, 
+  Home,
+  Settings,
+  LogOut,
+  User,
+  TrendingUp
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/src/api/auth";
+import AgencyTab from "@/src/components/dashboard/AgencyTab";
+import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
+import OfficesTab from "@/src/components/dashboard/OfficesTab";
+
+type TabType = "agency" | "vehicles" | "offices";
+
+const PrincipalDashboard: React.FC = () => {
+  const router = useRouter();
+  const { agency, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>("agency");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
+
+  const menuItems = [
+    { id: "agency", label: "Agency", icon: Building2 },
+    { id: "vehicles", label: "Vehicles", icon: Car },
+    { id: "offices", label: "Offices", icon: MapPin },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "agency":
+        return <AgencyTab agency={agency} />;
+      case "vehicles":
+        return <VehiclesTab />;
+      case "offices":
+        return <OfficesTab />;
+      default:
+        return <AgencyTab agency={agency} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+              <div className="ml-4 flex items-center">
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold px-3 py-2 text-sm rounded-lg shadow-lg">
+                  AG
+                </div>
+                <div className="ml-3">
+                  <h1 className="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+                  <p className="text-sm text-gray-500">{agency?.agencyName}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <User className="w-4 h-4" />
+                <span>{agency?.contactEmail}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+                <TrendingUp className="w-3 h-3" />
+                <span>{agency?.subscriptionTier}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-md transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}>
+          <nav className="p-4 space-y-2">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as TabType)}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+            
+            <div className="pt-4 mt-4 border-t border-gray-200">
+              <button
+                onClick={() => router.push("/")}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-medium">Back to Home</span>
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6">
+          <div className="max-w-7xl mx-auto">
+            {renderTabContent()}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default PrincipalDashboard;

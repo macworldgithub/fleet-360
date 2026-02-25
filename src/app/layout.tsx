@@ -6,17 +6,7 @@ import "./globals.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: [
-    "100",
-    "200",
-    "300",
-    "400",
-    "500",
-    "600",
-    "700",
-    "800",
-    "900",
-  ],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-poppins",
   display: "swap",
 });
@@ -44,6 +34,7 @@ export default function RootLayout({
         className={`
           ${poppins.variable}
           ${playfair.variable}
+         
           font-[var(--font-poppins)]
           antialiased
           bg-white
