@@ -40,15 +40,7 @@ export default function LoginPage() {
     try {
       const res = await loginAgency(form);
       setAuthTokens(res);
-
-      // Role-based navigation
-      if (res.agency.role === "PRINCIPAL") {
-        router.push("/principal");
-      } else if (res.agency.role === "FLEET_MANAGER") {
-        router.push("/fleet-manager");
-      } else {
-        router.push("/");
-      }
+      router.push("/");
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       setError(apiErr.message || "Something went wrong. Please try again.");
