@@ -58,7 +58,7 @@ const Navbar: React.FC = () => {
         </nav>
 
         {/* CTA BUTTONS */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-4 ml-6">
           {agency && (
             <button
               type="button"
@@ -69,7 +69,7 @@ const Navbar: React.FC = () => {
                   router.push("/fleet-manager");
                 }
               }}
-              className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
+              className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-3.5 py-1.5 text-[10px] font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
             >
               {agency.role === "PRINCIPAL"
                 ? "PRINCIPAL DASHBOARD"
