@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { API_BASE_URL } from "@/src/api/config";
 
 export interface RegisterAgencyPayload {
   agencyName: string;
