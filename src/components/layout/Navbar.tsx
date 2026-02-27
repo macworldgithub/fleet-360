@@ -59,6 +59,24 @@ const Navbar: React.FC = () => {
 
         {/* CTA BUTTONS */}
         <div className="hidden lg:flex items-center gap-3">
+          {agency && (
+            <button
+              type="button"
+              onClick={() => {
+                if (agency.role === "PRINCIPAL") {
+                  router.push("/principal");
+                } else if (agency.role === "FLEET_MANAGER") {
+                  router.push("/fleet-manager");
+                }
+              }}
+              className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-3 text-xs font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
+            >
+              {agency.role === "PRINCIPAL"
+                ? "PRINCIPAL DASHBOARD"
+                : "FLEET MANAGER DASHBOARD"}
+            </button>
+          )}
+
           <Link
             href="#contact"
             className="flex items-center gap-2 bg-[#C46A0A] text-white px-8 py-3.5 text-xs font-bold tracking-widest hover:bg-[#a85908] transition uppercase rounded-sm"

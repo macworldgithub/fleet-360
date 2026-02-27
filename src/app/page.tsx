@@ -31,19 +31,6 @@ export default function Home() {
   return (
     <>
       <Hero />
-      {isAuthenticated && agency && (
-        <section className="w-full bg-gray-900 py-6 flex justify-center">
-          <button
-            type="button"
-            onClick={handleGoToDashboard}
-            className="px-8 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-sm font-semibold tracking-wide text-white shadow-lg transition-colors"
-          >
-            {agency.role === "PRINCIPAL"
-              ? "Go to Principal Dashboard"
-              : "Go to Fleet Manager Dashboard"}
-          </button>
-        </section>
-      )}
       <Philosophy />
       <HowItWorks />
       <AgencyGarageSection />
