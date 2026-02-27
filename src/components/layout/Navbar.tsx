@@ -194,6 +194,23 @@ const Navbar: React.FC = () => {
                     Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
                   </p>
                 </div>
+                {agency && (
+                  <button
+                    onClick={() => {
+                      if (agency.role === "PRINCIPAL") {
+                        router.push("/principal");
+                      } else if (agency.role === "FLEET_MANAGER") {
+                        router.push("/fleet-manager");
+                      }
+                      setOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 mb-3 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#C46A0A] hover:text-white transition rounded-sm"
+                  >
+                    {agency.role === "PRINCIPAL"
+                      ? "Principal Dashboard"
+                      : "Fleet Manager Dashboard"}
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     handleLogout();
