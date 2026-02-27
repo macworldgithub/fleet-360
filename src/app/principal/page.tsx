@@ -96,7 +96,7 @@ const PrincipalDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-6rem)]">
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}>
           <nav className="p-4 space-y-2">
