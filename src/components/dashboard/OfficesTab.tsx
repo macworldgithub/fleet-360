@@ -12,7 +12,8 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
-import { API_BASE_URL, getAccessToken } from "@/src/api/auth";
+import { getAccessToken } from "@/src/api/auth";
+import { API_BASE_URL } from "@/src/api/config";
 
 interface AgencyOption {
   _id: string;

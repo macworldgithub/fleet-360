@@ -1,37 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Car,
-  MapPin,
-  Wrench,
-  Menu,
-  X,
-  Home,
-  Settings,
-  LogOut,
-  User,
-  TrendingUp,
-  Fuel,
-  Calendar,
-  AlertTriangle,
-} from "lucide-react";
+import { Car, MapPin, Users, Menu, X, Home, LogOut, User, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
-import FleetOverview from "@/src/components/dashboard/FleetOverview";
-import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
-import FuelManagement from "@/src/components/dashboard/FuelManagement";
-// import FleetOverview from "@/src/components/dashboard/FleetOverview";
-// import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
-// import FuelManagement from "@/src/components/dashboard/FuelManagement";
+import OfficesTab from "@/src/components/dashboard/OfficesTab";
+import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
+import DriversTab from "@/src/components/dashboard/DriversTab";
 
-type TabType = "overview" | "maintenance" | "fuel";
+type TabType = "offices" | "vehicles" | "drivers";
 
 const FleetManagerDashboard: React.FC = () => {
   const router = useRouter();
 
   const { agency, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>("offices");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
@@ -40,26 +23,26 @@ const FleetManagerDashboard: React.FC = () => {
   };
 
   const menuItems = [
-    { id: "overview", label: "Fleet Overview", icon: Car },
-    { id: "maintenance", label: "Maintenance", icon: Wrench },
-    { id: "fuel", label: "Fuel Management", icon: Fuel },
+    { id: "offices", label: "Offices", icon: MapPin },
+    { id: "vehicles", label: "Vehicles", icon: Car },
+    { id: "drivers", label: "Drivers", icon: Users },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "overview":
-        return <FleetOverview />;
-      case "maintenance":
-        return <MaintenanceSchedule />;
-      case "fuel":
-        return <FuelManagement />;
+      case "offices":
+        return <OfficesTab />;
+      case "vehicles":
+        return <VehiclesTab />;
+      case "drivers":
+        return <DriversTab />;
       default:
-        return <FleetOverview />;
+        return <OfficesTab />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen pt-24 bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8">
@@ -109,7 +92,7 @@ const FleetManagerDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex min-h-[calc(100vh-6rem)]">
         {/* Sidebar */}
         <aside
           className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}
