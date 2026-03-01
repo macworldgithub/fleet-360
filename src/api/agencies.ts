@@ -50,3 +50,7 @@ export async function updateAgency(
   const res = await apiClient.patch<Agency>(`/agencies/${agencyId}`, payload);
   return res.data;
 }
+
+export async function deleteAgency(agencyId: string): Promise<void> {
+  await apiClient.delete(`/agencies/${agencyId}`);
+}

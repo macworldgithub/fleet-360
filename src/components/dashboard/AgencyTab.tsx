@@ -17,7 +17,7 @@ import {
   Plus
 } from "lucide-react";
 import { AgencyInfo } from "@/src/api/auth";
-import { fetchAgencies, createAgency, updateAgency, type Agency } from "@/src/api/agencies";
+import { fetchAgencies, createAgency, updateAgency, deleteAgency, type Agency } from "@/src/api/agencies";
 
 interface AgencyTabProps {
   agency: AgencyInfo | null;
@@ -60,6 +60,9 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
     role: "FLEET_MANAGER" as "PRINCIPAL" | "FLEET_MANAGER",
   });
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Agency | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   useEffect(() => {
     const loadAgencies = async () => {
@@ -150,6 +153,33 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       role: (agencyToEdit.role || "FLEET_MANAGER") as "PRINCIPAL" | "FLEET_MANAGER",
     });
     setIsEditModalOpen(true);
+  };
+
+  const openDeleteModal = (agencyToDelete: Agency) => {
+    setDeleteTarget(agencyToDelete);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteSubmitting(true);
+    try {
+      await deleteAgency(deleteTarget._id);
+      setAgencies((prev) => prev.filter((item) => item._id !== deleteTarget._id));
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
+      if (typeof window !== "undefined") {
+        alert("Agency deleted successfully.");
+      }
+    } catch (err: any) {
+      console.error("Failed to delete agency", err);
+      const message = err?.response?.data?.message || "Failed to delete agency. Please try again.";
+      if (typeof window !== "undefined") {
+        alert(message);
+      }
+    } finally {
+      setDeleteSubmitting(false);
+    }
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -291,6 +321,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                         <button
                           type="button"
                           className="px-3 py-1 rounded-md border border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center space-x-1"
+                          onClick={() => openDeleteModal(item)}
                         >
                           <Trash2 className="w-3 h-3" />
                           <span>Delete</span>
@@ -687,6 +718,48 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isDeleteModalOpen && deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <h3 className="text-lg font-semibold text-gray-900">Delete Agency</h3>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to delete
+                {" "}
+                <span className="font-semibold">{deleteTarget.agencyName}</span>?
+              </p>
+              <p className="text-xs text-gray-500">
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setDeleteTarget(null);
+                }}
+                disabled={deleteSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleConfirmDelete}
+                disabled={deleteSubmitting}
+              >
+                {deleteSubmitting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}
