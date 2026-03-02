@@ -11,10 +11,10 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
-import { Table, Button, Popconfirm, Tag, Input, Space, Typography } from "antd";
+import { Table, Button, Tag, Input, Space, Typography } from "antd";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import type { ColumnsType } from "antd/es/table";
 import {
   officeService,
@@ -46,11 +46,11 @@ export default function OfficesTab() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
-    null,
-  );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Office | null>(null);
   const [editingOffice, setEditingOffice] = useState<Office | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   const [form, setForm] = useState<OfficePayload>({
     officeName: "",
@@ -147,18 +147,26 @@ export default function OfficesTab() {
       setLoadingAction(null);
     }
   };
-  const handleDeleteOffice = async (officeId: string) => {
-    setLoadingAction(officeId);
+  const handleDeleteOffice = async () => {
+    if (!deleteTarget) return;
+    setDeleteSubmitting(true);
     try {
-      await officeService.deleteOffice(officeId);
-      setOffices((prev) => prev.filter((o) => o._id !== officeId));
-      setShowDeleteConfirm(null);
+      await officeService.deleteOffice(deleteTarget._id);
+      setOffices((prev) => prev.filter((o) => o._id !== deleteTarget._id));
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
       toast.success("Office deleted successfully!");
     } catch (err) {
+      console.error(err);
       toast.error("Failed to delete office");
     } finally {
-      setLoadingAction(null);
+      setDeleteSubmitting(false);
     }
+  };
+
+  const openDeleteModal = (officeToDelete: Office) => {
+    setDeleteTarget(officeToDelete);
+    setIsDeleteModalOpen(true);
   };
 
   const openEditModal = async (office: Office) => {
@@ -248,27 +256,16 @@ export default function OfficesTab() {
           >
             Edit
           </Button>
-          <Popconfirm
-            title="Delete Office"
-            description="Are you sure you want to delete this office? This action cannot be undone."
-            onConfirm={() => handleDeleteOffice(record._id)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{
-              danger: true,
-              loading: loadingAction === record._id,
-            }}
+          <Button
+            type="link"
+            danger
+            icon={<Trash2 size={16} />}
+            onClick={() => openDeleteModal(record)}
+            disabled={loadingAction === record._id}
+            style={{ padding: 0 }}
           >
-            <Button
-              type="link"
-              danger
-              icon={<Trash2 size={16} />}
-              disabled={loadingAction === record._id}
-              style={{ padding: 0 }}
-            >
-              Delete
-            </Button>
-          </Popconfirm>
+            Delete
+          </Button>
         </Space>
       ),
     },
@@ -441,32 +438,46 @@ export default function OfficesTab() {
             </FormModal>
           )}
 
-          {showDeleteConfirm && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-6 max-w-md w-full">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Confirm Delete
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Are you sure you want to delete this office? This cannot be
-                  undone.
-                </p>
-                <div className="flex justify-end gap-3">
+          {isDeleteModalOpen && deleteTarget && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                <div className="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Delete Office
+                  </h3>
+                </div>
+                <div className="px-6 py-5 space-y-3">
+                  <p className="text-sm text-gray-700">
+                    Are you sure you want to delete{" "}
+                    <span className="font-semibold">
+                      {deleteTarget.officeName}
+                    </span>
+                    ?
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    This action cannot be undone.
+                  </p>
+                </div>
+                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
                   <button
-                    onClick={() => setShowDeleteConfirm(null)}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => {
+                      setIsDeleteModalOpen(false);
+                      setDeleteTarget(null);
+                    }}
+                    disabled={deleteSubmitting}
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleDeleteOffice(showDeleteConfirm!)}
-                    disabled={loadingAction === showDeleteConfirm}
-                    className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                    type="button"
+                    className="px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={handleDeleteOffice}
+                    disabled={deleteSubmitting}
                   >
-                    {loadingAction === showDeleteConfirm && (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    )}
-                    Delete
+                    {deleteSubmitting ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
