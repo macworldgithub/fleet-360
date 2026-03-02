@@ -1,5 +1,4 @@
-import { API_BASE_URL } from "@/src/api/config";
-import { getAccessToken } from "@/src/api/auth";
+import apiClient from "@/src/api/http";
 
 export interface Agency {
   _id: string;
@@ -19,21 +18,39 @@ export interface Agency {
 }
 
 export async function fetchAgencies(): Promise<Agency[]> {
-  const token = getAccessToken();
+  const res = await apiClient.get<Agency[]>("/agencies");
+  return res.data;
+}
 
-  const res = await fetch(`${API_BASE_URL}/api/agencies`, {
-    method: "GET",
-    headers: {
-      Accept: "*/*",
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    cache: "no-store",
-  });
+export interface CreateAgencyPayload {
+  agencyName: string;
+  businessType: string;
+  abn: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  country: string;
+  state: string;
+  city: string;
+  subscriptionTier: string;
+  role: "PRINCIPAL" | "FLEET_MANAGER";
+}
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch agencies");
-  }
+export async function createAgency(payload: CreateAgencyPayload): Promise<Agency> {
+  const res = await apiClient.post<Agency>("/agencies", payload);
+  return res.data;
+}
 
-  return res.json();
+export type UpdateAgencyPayload = CreateAgencyPayload;
+
+export async function updateAgency(
+  agencyId: string,
+  payload: UpdateAgencyPayload,
+): Promise<Agency> {
+  const res = await apiClient.patch<Agency>(`/agencies/${agencyId}`, payload);
+  return res.data;
+}
+
+export async function deleteAgency(agencyId: string): Promise<void> {
+  await apiClient.delete(`/agencies/${agencyId}`);
 }
