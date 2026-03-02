@@ -34,9 +34,12 @@ export interface CreateAgencyPayload {
   city: string;
   subscriptionTier: string;
   role: "PRINCIPAL" | "FLEET_MANAGER";
+  password: string;
 }
 
-export async function createAgency(payload: CreateAgencyPayload): Promise<Agency> {
+export async function createAgency(
+  payload: CreateAgencyPayload,
+): Promise<Agency> {
   const res = await apiClient.post<Agency>("/agencies", payload);
   return res.data;
 }

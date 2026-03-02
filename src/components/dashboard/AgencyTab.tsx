@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { 
-  Building2, 
-  Users, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  Building2,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
   Edit,
   Save,
   X,
@@ -14,10 +14,17 @@ import {
   Globe,
   AlertTriangle,
   Trash2,
-  Plus
+  Plus,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { AgencyInfo } from "@/src/api/auth";
-import { fetchAgencies, createAgency, updateAgency, deleteAgency, type Agency } from "@/src/api/agencies";
+import {
+  fetchAgencies,
+  createAgency,
+  updateAgency,
+  deleteAgency,
+  type Agency,
+} from "@/src/api/agencies";
 
 interface AgencyTabProps {
   agency: AgencyInfo | null;
@@ -42,6 +49,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
     city: "",
     subscriptionTier: "ESSENTIAL",
     role: "FLEET_MANAGER" as "PRINCIPAL" | "FLEET_MANAGER",
+    password: "",
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -58,6 +66,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
     city: "",
     subscriptionTier: "ESSENTIAL",
     role: "FLEET_MANAGER" as "PRINCIPAL" | "FLEET_MANAGER",
+    password: "",
   });
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -115,6 +124,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       const created = await createAgency(payload);
       setAgencies((prev) => [created, ...prev]);
       setIsAddModalOpen(false);
+      toast.success("Agency created successfully!");
       setForm({
         agencyName: "",
         businessType: "",
@@ -127,10 +137,26 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
         city: "",
         subscriptionTier: "ESSENTIAL",
         role: "FLEET_MANAGER",
+        password: "",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create agency", err);
-      setFormError("Failed to create agency. Please try again.");
+      let errorMessage = "Failed to create agency. Please try again.";
+
+      // Handle specific duplicate email error
+      if (
+        err?.response?.data?.error?.code === 11000 ||
+        err?.response?.data?.message?.includes("duplicate key") ||
+        err?.response?.data?.message?.includes("contactEmail")
+      ) {
+        errorMessage =
+          "An agency with this email already exists. Please use a different email address.";
+      } else if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+
+      setFormError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -150,7 +176,10 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       state: agencyToEdit.state || "",
       city: agencyToEdit.city || "",
       subscriptionTier: agencyToEdit.subscriptionTier || "ESSENTIAL",
-      role: (agencyToEdit.role || "FLEET_MANAGER") as "PRINCIPAL" | "FLEET_MANAGER",
+      role: (agencyToEdit.role || "FLEET_MANAGER") as
+        | "PRINCIPAL"
+        | "FLEET_MANAGER",
+      password: "",
     });
     setIsEditModalOpen(true);
   };
@@ -165,18 +194,18 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
     setDeleteSubmitting(true);
     try {
       await deleteAgency(deleteTarget._id);
-      setAgencies((prev) => prev.filter((item) => item._id !== deleteTarget._id));
+      setAgencies((prev) =>
+        prev.filter((item) => item._id !== deleteTarget._id),
+      );
       setIsDeleteModalOpen(false);
       setDeleteTarget(null);
-      if (typeof window !== "undefined") {
-        alert("Agency deleted successfully.");
-      }
+      toast.success("Agency deleted successfully.");
     } catch (err: any) {
       console.error("Failed to delete agency", err);
-      const message = err?.response?.data?.message || "Failed to delete agency. Please try again.";
-      if (typeof window !== "undefined") {
-        alert(message);
-      }
+      const message =
+        err?.response?.data?.message ||
+        "Failed to delete agency. Please try again.";
+      toast.error(message);
     } finally {
       setDeleteSubmitting(false);
     }
@@ -199,18 +228,25 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       );
       setIsEditModalOpen(false);
       setSelectedAgencyId(null);
-
-      if (typeof window !== "undefined") {
-        alert("Agency updated successfully.");
-      }
+      toast.success("Agency updated successfully.");
     } catch (err: any) {
       console.error("Failed to update agency", err);
-      const message =
-        err?.response?.data?.message || "Failed to update agency. Please try again.";
-      setEditFormError(message);
-      if (typeof window !== "undefined") {
-        alert(message);
+      let errorMessage = "Failed to update agency. Please try again.";
+
+      // Handle specific duplicate email error
+      if (
+        err?.response?.data?.error?.code === 11000 ||
+        err?.response?.data?.message?.includes("duplicate key") ||
+        err?.response?.data?.message?.includes("contactEmail")
+      ) {
+        errorMessage =
+          "An agency with this email already exists. Please use a different email address.";
+      } else if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
       }
+
+      setEditFormError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setEditSubmitting(false);
     }
@@ -221,15 +257,18 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Agency Information</h2>
-         
+          <h2 className="text-2xl font-bold text-gray-900">
+            Agency Information
+          </h2>
         </div>
       </div>
       {/* Agencies Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">All Agencies</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              All Agencies
+            </h3>
             <p className="text-sm text-gray-600 mt-1">
               List of all agencies registered in the system.
             </p>
@@ -281,22 +320,32 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                 {agencies.map((item) => (
                   <tr key={item._id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 align-top">
-                      <div className="font-medium text-gray-900">{item.agencyName}</div>
-                      <div className="text-xs text-gray-500 mt-1">{item.businessType}</div>
+                      <div className="font-medium text-gray-900">
+                        {item.agencyName}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {item.businessType}
+                      </div>
                     </td>
                     <td className="px-4 py-3 align-top text-sm text-gray-700">
                       <div>{item.contactEmail}</div>
-                      <div className="text-xs text-gray-500">{item.contactPhone}</div>
+                      <div className="text-xs text-gray-500">
+                        {item.contactPhone}
+                      </div>
                     </td>
                     <td className="px-4 py-3 align-top text-sm text-gray-700">
                       <div>{item.city}</div>
-                      <div className="text-xs text-gray-500">{item.state}, {item.country}</div>
+                      <div className="text-xs text-gray-500">
+                        {item.state}, {item.country}
+                      </div>
                     </td>
                     <td className="px-4 py-3 align-top text-sm text-gray-700">
                       <div className="uppercase text-xs font-semibold text-gray-800">
                         {item.role || "FLEET_MANAGER"}
                       </div>
-                      <div className="text-xs text-gray-500">Tier: {item.subscriptionTier}</div>
+                      <div className="text-xs text-gray-500">
+                        Tier: {item.subscriptionTier}
+                      </div>
                     </td>
                     <td className="px-4 py-3 align-top">
                       <span
@@ -340,7 +389,9 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Add Agency</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add Agency
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
@@ -367,7 +418,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="agencyName"
                     value={form.agencyName}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -380,7 +431,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="businessType"
                     value={form.businessType}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -393,7 +444,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="abn"
                     value={form.abn}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -406,7 +457,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="contactEmail"
                     value={form.contactEmail}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -419,7 +470,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="contactPhone"
                     value={form.contactPhone}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -432,7 +483,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="address"
                     value={form.address}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -445,7 +496,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="country"
                     value={form.country}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -458,7 +509,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="state"
                     value={form.state}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -471,7 +522,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="city"
                     value={form.city}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -483,7 +534,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="subscriptionTier"
                     value={form.subscriptionTier}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   >
                     <option value="ESSENTIAL">ESSENTIAL</option>
@@ -499,12 +550,25 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="role"
                     value={form.role}
                     onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   >
                     <option value="PRINCIPAL">Principal</option>
                     <option value="FLEET_MANAGER">Fleet Manager</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleInputChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    required
+                  />
                 </div>
               </div>
 
@@ -534,7 +598,9 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Agency</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Edit Agency
+              </h3>
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
@@ -561,7 +627,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="agencyName"
                     value={editForm.agencyName}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -574,12 +640,12 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="businessType"
                     value={editForm.businessType}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border text-black border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 text-black mb-1">
                     ABN
                   </label>
                   <input
@@ -587,7 +653,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="abn"
                     value={editForm.abn}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                   />
                 </div>
                 <div>
@@ -599,7 +665,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="contactEmail"
                     value={editForm.contactEmail}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -612,7 +678,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="contactPhone"
                     value={editForm.contactPhone}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -625,7 +691,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="address"
                     value={editForm.address}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                   />
                 </div>
                 <div>
@@ -637,7 +703,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="country"
                     value={editForm.country}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -650,7 +716,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="state"
                     value={editForm.state}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -663,7 +729,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="city"
                     value={editForm.city}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   />
                 </div>
@@ -675,7 +741,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="subscriptionTier"
                     value={editForm.subscriptionTier}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   >
                     <option value="ESSENTIAL">ESSENTIAL</option>
@@ -691,12 +757,25 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                     name="role"
                     value={editForm.role}
                     onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
                     required
                   >
                     <option value="PRINCIPAL">Principal</option>
                     <option value="FLEET_MANAGER">Fleet Manager</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={editForm.password}
+                    onChange={handleEditInputChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    required
+                  />
                 </div>
               </div>
 
@@ -727,13 +806,15 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
             <div className="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-red-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Delete Agency</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete Agency
+              </h3>
             </div>
             <div className="px-6 py-5 space-y-3">
               <p className="text-sm text-gray-700">
-                Are you sure you want to delete
-                {" "}
-                <span className="font-semibold">{deleteTarget.agencyName}</span>?
+                Are you sure you want to delete{" "}
+                <span className="font-semibold">{deleteTarget.agencyName}</span>
+                ?
               </p>
               <p className="text-xs text-gray-500">
                 This action cannot be undone.
