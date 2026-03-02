@@ -548,12 +548,11 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                   </label>
                   <select
                     name="role"
-                    value={form.role}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    value="FLEET_MANAGER"
+                    disabled
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A] opacity-50 cursor-not-allowed"
                     required
                   >
-                    <option value="PRINCIPAL">Principal</option>
                     <option value="FLEET_MANAGER">Fleet Manager</option>
                   </select>
                 </div>
@@ -755,12 +754,11 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
                   </label>
                   <select
                     name="role"
-                    value={editForm.role}
-                    onChange={handleEditInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                    value="FLEET_MANAGER"
+                    disabled
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A] opacity-50 cursor-not-allowed"
                     required
                   >
-                    <option value="PRINCIPAL">Principal</option>
                     <option value="FLEET_MANAGER">Fleet Manager</option>
                   </select>
                 </div>
