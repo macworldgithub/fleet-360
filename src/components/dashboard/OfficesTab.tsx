@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Building2,
-  MapPin,
   Search,
   Plus,
   Edit,
@@ -12,31 +11,36 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
-import { getAccessToken } from "@/src/api/auth";
-import { API_BASE_URL } from "@/src/api/config";
+import { Table, Button, Popconfirm, Tag, Input, Space, Typography } from "antd";
+import { DataTable } from "@/src/components/dashboard/DataTable";
+import { FormModal } from "@/src/components/dashboard/FormModal";
+import { toast } from "react-toastify";
+import type { ColumnsType } from "antd/es/table";
+import {
+  officeService,
+  AgencyOption,
+  Office,
+  OfficePayload,
+} from "@/src/api/office";
+import { fetchAgencies } from "@/src/api/agencies";
 
-interface AgencyOption {
-  _id: string;
-  agencyName: string;
-}
+const { Text, Title } = Typography;
 
-interface Office {
-  _id: string;
-  officeName: string;
-  officeType: string;
-  officeHours?: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  isActive: boolean;
-}
+type OfficeFormModalProps = {
+  title: string;
+  form: any;
+  setForm: (f: any) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  submitText: string;
+  loading: boolean;
+};
 
 export default function OfficesTab() {
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [selectedAgencyId, setSelectedAgencyId] = useState<string>("");
   const [offices, setOffices] = useState<Office[]>([]);
-  const [loadingOffices, setLoadingOffices] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -46,117 +50,74 @@ export default function OfficesTab() {
     null,
   );
   const [editingOffice, setEditingOffice] = useState<Office | null>(null);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null); // officeId or "add"
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  // Form state (shared for add & edit)
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<OfficePayload>({
     officeName: "",
-    officeType: "Real Estate Branch",
-    officeHours: "9:00 AM - 5:00 PM",
+    officeType: "",
+    officeHours: "",
     address: "",
     city: "",
     state: "",
-    country: "Australia",
+    country: "",
   });
 
   useEffect(() => {
-    fetchAgencies();
+    const loadAgencies = async () => {
+      try {
+        const data = await fetchAgencies();
+        setAgencies(
+          data.map((a) => ({ _id: a._id, agencyName: a.agencyName })),
+        ); // map to minimal shape if needed
+        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+      } catch (err: any) {
+        console.error("Failed to load agencies:", err);
+        setError("Failed to load agencies");
+      }
+    };
+    loadAgencies();
   }, []);
 
   useEffect(() => {
-    if (selectedAgencyId) {
-      fetchOffices(selectedAgencyId);
-    } else {
+    if (!selectedAgencyId) {
       setOffices([]);
+      return;
     }
+
+    const loadOffices = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await officeService.getOfficesByAgency(selectedAgencyId);
+        setOffices(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to load offices");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadOffices();
   }, [selectedAgencyId]);
-
-  const fetchAgencies = async () => {
-    try {
-      const token = getAccessToken();
-      if (!token) throw new Error("Not authenticated");
-      const res = await fetch(`${API_BASE_URL}/api/agencies`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        // include status so we can diagnose 401 versus other failures
-        throw new Error(`Failed to fetch agencies (HTTP ${res.status})`);
-      }
-      const data = await res.json();
-      setAgencies(data);
-      if (data.length > 0) setSelectedAgencyId(data[0]._id);
-    } catch (err: any) {
-      setError(err.message || "Failed to load agencies");
-    }
-  };
-
-  const fetchOffices = async (agencyId: string) => {
-    setLoadingOffices(true);
-    setError(null);
-    try {
-      const token = getAccessToken();
-      if (!token) throw new Error("Not authenticated");
-      const res = await fetch(
-        `${API_BASE_URL}/api/agencies/${agencyId}/offices`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (!res.ok) {
-        throw new Error(`Failed to fetch offices (HTTP ${res.status})`);
-      }
-      const data = await res.json();
-      setOffices(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to load offices");
-    } finally {
-      setLoadingOffices(false);
-    }
-  };
-
-  const fetchOfficeById = async (officeId: string) => {
-    try {
-      const token = getAccessToken();
-      if (!token) throw new Error("Not authenticated");
-      const res = await fetch(`${API_BASE_URL}/api/offices/${officeId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch office");
-      return await res.json();
-    } catch (err) {
-      console.error(err);
-      alert("Could not load office details");
-      return null;
-    }
-  };
 
   const handleAddOffice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAgencyId) return;
 
     setLoadingAction("add");
+
     try {
-      const token = getAccessToken();
-      const res = await fetch(
-        `${API_BASE_URL}/api/agencies/${selectedAgencyId}/offices`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        },
+      const newOffice = await officeService.createOffice(
+        selectedAgencyId,
+        form,
       );
 
-      if (!res.ok) throw new Error("Failed to create office");
-
-      const newOffice = await res.json();
       setOffices((prev) => [...prev, newOffice]);
       setShowAddForm(false);
       resetForm();
+      toast.success("Office created successfully!");
     } catch (err) {
-      alert("Error creating office");
+      console.error(err);
+      toast.error("Failed to create office");
     } finally {
       setLoadingAction(null);
     }
@@ -167,61 +128,42 @@ export default function OfficesTab() {
     if (!editingOffice) return;
 
     setLoadingAction(editingOffice._id);
+
     try {
-      const token = getAccessToken();
-      const res = await fetch(
-        `${API_BASE_URL}/api/offices/${editingOffice._id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        },
-      );
+      const updated = await officeService.updateOffice(editingOffice._id, form);
 
-      if (!res.ok) throw new Error("Failed to update office");
-
-      const updatedOffice = await res.json();
       setOffices((prev) =>
-        prev.map((o) => (o._id === updatedOffice._id ? updatedOffice : o)),
+        prev.map((o) => (o._id === updated._id ? updated : o)),
       );
+
       setShowEditForm(false);
       setEditingOffice(null);
       resetForm();
+      toast.success("Office updated successfully!");
     } catch (err) {
-      alert("Error updating office");
+      console.error(err);
+      toast.error("Failed to update office");
     } finally {
       setLoadingAction(null);
     }
   };
-
   const handleDeleteOffice = async (officeId: string) => {
     setLoadingAction(officeId);
     try {
-      const token = getAccessToken();
-      const res = await fetch(`${API_BASE_URL}/api/offices/${officeId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to delete office");
-
+      await officeService.deleteOffice(officeId);
       setOffices((prev) => prev.filter((o) => o._id !== officeId));
       setShowDeleteConfirm(null);
+      toast.success("Office deleted successfully!");
     } catch (err) {
-      alert("Error deleting office");
+      toast.error("Failed to delete office");
     } finally {
       setLoadingAction(null);
     }
   };
 
   const openEditModal = async (office: Office) => {
-    const fullOffice = await fetchOfficeById(office._id);
-    if (fullOffice) {
+    try {
+      const fullOffice = await officeService.getOfficeById(office._id);
       setEditingOffice(fullOffice);
       setForm({
         officeName: fullOffice.officeName || "",
@@ -233,35 +175,193 @@ export default function OfficesTab() {
         country: fullOffice.country || "Australia",
       });
       setShowEditForm(true);
+    } catch {
+      alert("Could not load office details");
     }
   };
 
   const resetForm = () => {
     setForm({
       officeName: "",
-      officeType: "Real Estate Branch",
-      officeHours: "9:00 AM - 5:00 PM",
+      officeType: "",
+      officeHours: "",
       address: "",
       city: "",
       state: "",
-      country: "Australia",
+      country: "",
     });
   };
 
   const filteredOffices = offices.filter(
     (o) =>
       o.officeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.city.toLowerCase().includes(searchTerm.toLowerCase()),
+      o.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.address.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const columns: ColumnsType<Office> = [
+    {
+      title: "Office Name",
+      dataIndex: "officeName",
+      key: "officeName",
+      render: (text) => <Text strong>{text}</Text>,
+    },
+    {
+      title: "Type",
+      dataIndex: "officeType",
+      key: "officeType",
+      render: (type) => <Tag color="blue">{type}</Tag>,
+    },
+    {
+      title: "Address",
+      dataIndex: "address",
+      key: "address",
+    },
+    {
+      title: "Location",
+      key: "location",
+      render: (_, record) => (
+        <Text>
+          {record.city}, {record.state} • {record.country}
+        </Text>
+      ),
+    },
+    {
+      title: "Hours",
+      dataIndex: "officeHours",
+      key: "officeHours",
+      render: (hours) => hours || "—",
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "right",
+      width: 140,
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="link"
+            icon={<Edit size={16} />}
+            onClick={() => openEditModal(record)}
+            disabled={loadingAction === record._id}
+            style={{ padding: 0 }}
+          >
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete Office"
+            description="Are you sure you want to delete this office? This action cannot be undone."
+            onConfirm={() => handleDeleteOffice(record._id)}
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{
+              danger: true,
+              loading: loadingAction === record._id,
+            }}
+          >
+            <Button
+              type="link"
+              danger
+              icon={<Trash2 size={16} />}
+              disabled={loadingAction === record._id}
+              style={{ padding: 0 }}
+            >
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const OfficeFormFields = (
+    <>
+      {/* Office Name */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5 text-black">
+          Office Name *
+        </label>
+        <input
+          required
+          value={form.officeName}
+          onChange={(e) => setForm({ ...form, officeName: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-600"
+        />
+      </div>
+
+      {/* Office Type */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5 text-black">
+          Office Type
+        </label>
+        <input
+          value={form.officeType}
+          onChange={(e) => setForm({ ...form, officeType: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-600"
+        />
+      </div>
+
+      {/* Office Hours */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5 text-black">
+          Office Hours
+        </label>
+        <input
+          value={form.officeHours}
+          onChange={(e) => setForm({ ...form, officeHours: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-600"
+        />
+      </div>
+
+      {/* Address */}
+      <div>
+        <label className="block text-sm font-medium mb-1.5 text-black">
+          Address *
+        </label>
+        <input
+          required
+          value={form.address}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-600"
+        />
+      </div>
+
+      {/* City / State / Country */}
+      <div className="grid grid-cols-3 gap-4">
+        <input
+          placeholder="City"
+          required
+          value={form.city}
+          onChange={(e) => setForm({ ...form, city: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-400"
+        />
+
+        <input
+          placeholder="State"
+          required
+          value={form.state}
+          onChange={(e) => setForm({ ...form, state: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-400"
+        />
+
+        <input
+          placeholder="Country"
+          value={form.country}
+          onChange={(e) => setForm({ ...form, country: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 text-black placeholder-gray-400"
+        />
+      </div>
+    </>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header + Agency Selector */}
+    <div className="space-y-6 p-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Branch Offices</h2>
-          <p className="text-gray-600">Manage offices for each agency</p>
+          <Title level={2}>Branch Offices</Title>
+          <Text type="secondary">Manage offices for each agency</Text>
         </div>
+
         <div className="min-w-[240px]">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Select Agency
@@ -270,7 +370,7 @@ export default function OfficesTab() {
             <select
               value={selectedAgencyId}
               onChange={(e) => setSelectedAgencyId(e.target.value)}
-              className="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 appearance-none"
+              className="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 appearance-none text-gray-900"
             >
               <option value="">-- Select Agency --</option>
               {agencies.map((a) => (
@@ -286,32 +386,7 @@ export default function OfficesTab() {
 
       {selectedAgencyId ? (
         <>
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search offices..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              />
-            </div>
-            <button
-              onClick={() => {
-                resetForm();
-                setShowAddForm(true);
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 font-medium shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              Add Office
-            </button>
-          </div>
-
-          {/* Content */}
-          {loadingOffices ? (
+          {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="w-9 h-9 animate-spin text-amber-600" />
             </div>
@@ -320,105 +395,52 @@ export default function OfficesTab() {
               <AlertCircle className="w-9 h-9 text-red-500 mx-auto mb-3" />
               <p className="text-red-700">{error}</p>
             </div>
-          ) : filteredOffices.length === 0 ? (
-            <div className="bg-gray-50 rounded-xl p-10 text-center text-gray-500 border border-gray-200">
-              No offices found for this agency
-            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredOffices.map((office) => (
-                <div
-                  key={office._id}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
-                >
-                  <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-5 py-4 text-white">
-                    <h3 className="font-semibold text-lg">
-                      {office.officeName}
-                    </h3>
-                    <p className="text-amber-100 text-sm mt-0.5">
-                      {office.officeType}
-                    </p>
-                  </div>
-                  <div className="p-5 space-y-3 text-sm">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-gray-900">{office.address}</p>
-                        <p className="text-gray-600">
-                          {office.city}, {office.state} • {office.country}
-                        </p>
-                      </div>
-                    </div>
-                    {office.officeHours && (
-                      <div className="flex items-center gap-3">
-                        <span className="w-5 text-center text-gray-400">
-                          🕒
-                        </span>
-                        <p className="text-gray-900">{office.officeHours}</p>
-                      </div>
-                    )}
-                    <div className="pt-3 border-t border-gray-100 flex justify-end gap-4 text-xs font-medium">
-                      <button
-                        onClick={() => openEditModal(office)}
-                        disabled={loadingAction === office._id}
-                        className="text-amber-600 hover:text-amber-800 flex items-center gap-1 disabled:opacity-50"
-                      >
-                        {loadingAction === office._id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Edit className="w-4 h-4" />
-                        )}
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm(office._id)}
-                        disabled={loadingAction === office._id}
-                        className="text-red-600 hover:text-red-700 flex items-center gap-1 disabled:opacity-50"
-                      >
-                        {loadingAction === office._id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add Modal */}
-          {showAddForm && (
-            <OfficeFormModal
-              title="Add New Office"
-              form={form}
-              setForm={setForm}
-              onSubmit={handleAddOffice}
-              onCancel={() => setShowAddForm(false)}
-              submitText="Create Office"
-              loading={loadingAction === "add"}
+            <DataTable<Office>
+              title="Branch Offices"
+              description="Manage offices for each agency"
+              dataSource={filteredOffices}
+              columns={columns}
+              loading={loading}
+              emptyText="No offices found for this agency"
+              onAddClick={() => {
+                resetForm();
+                setShowAddForm(true);
+              }}
+              addButtonText="Add Office"
+              // searchValue={searchTerm}
+              // onSearchChange={setSearchTerm}
             />
           )}
 
-          {/* Edit Modal */}
+          {/* Your modals remain the same */}
+          <FormModal
+            title="Add New Office"
+            isOpen={showAddForm}
+            onClose={() => setShowAddForm(false)}
+            onSubmit={handleAddOffice}
+            submitText="Create Office"
+            submitLoading={loadingAction === "add"}
+          >
+            {OfficeFormFields}
+          </FormModal>
+
           {showEditForm && editingOffice && (
-            <OfficeFormModal
+            <FormModal
               title="Edit Office"
-              form={form}
-              setForm={setForm}
-              onSubmit={handleEditOffice}
-              onCancel={() => {
+              isOpen={showEditForm}
+              onClose={() => {
                 setShowEditForm(false);
                 setEditingOffice(null);
               }}
+              onSubmit={handleEditOffice}
               submitText="Save Changes"
-              loading={loadingAction === editingOffice._id}
-            />
+              submitLoading={loadingAction === editingOffice?._id}
+            >
+              {OfficeFormFields}
+            </FormModal>
           )}
 
-          {/* Delete Confirmation */}
           {showDeleteConfirm && (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl p-6 max-w-md w-full">
@@ -426,8 +448,8 @@ export default function OfficesTab() {
                   Confirm Delete
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Are you sure you want to delete this office? This action
-                  cannot be undone.
+                  Are you sure you want to delete this office? This cannot be
+                  undone.
                 </p>
                 <div className="flex justify-end gap-3">
                   <button
@@ -437,7 +459,7 @@ export default function OfficesTab() {
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleDeleteOffice(showDeleteConfirm)}
+                    onClick={() => handleDeleteOffice(showDeleteConfirm!)}
                     disabled={loadingAction === showDeleteConfirm}
                     className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
                   >
@@ -454,160 +476,14 @@ export default function OfficesTab() {
       ) : (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
           <Building2 className="w-12 h-12 text-amber-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-amber-800 mb-2">
+          <Title level={4} className="!text-amber-800 mb-2">
             Select an agency first
-          </h3>
-          <p className="text-amber-700">
+          </Title>
+          <Text type="secondary">
             Choose an agency from the dropdown to view and manage its offices.
-          </p>
+          </Text>
         </div>
       )}
-    </div>
-  );
-}
-
-// Reusable modal form component
-type OfficeFormModalProps = {
-  title: string;
-  form: any;
-  setForm: (f: any) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onCancel: () => void;
-  submitText: string;
-  loading: boolean;
-};
-
-function OfficeFormModal({
-  title,
-  form,
-  setForm,
-  onSubmit,
-  onCancel,
-  submitText,
-  loading,
-}: OfficeFormModalProps) {
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-            <button onClick={onCancel}>
-              <X className="w-6 h-6 text-gray-500 hover:text-gray-700" />
-            </button>
-          </div>
-
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Office Name *
-              </label>
-              <input
-                required
-                value={form.officeName}
-                onChange={(e) =>
-                  setForm({ ...form, officeName: e.target.value })
-                }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Type
-                </label>
-                <input
-                  value={form.officeType}
-                  onChange={(e) =>
-                    setForm({ ...form, officeType: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Hours
-                </label>
-                <input
-                  value={form.officeHours}
-                  onChange={(e) =>
-                    setForm({ ...form, officeHours: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Address *
-              </label>
-              <input
-                required
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  City *
-                </label>
-                <input
-                  required
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  State *
-                </label>
-                <input
-                  required
-                  value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Country
-                </label>
-                <input
-                  value={form.country}
-                  onChange={(e) =>
-                    setForm({ ...form, country: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="px-5 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 disabled:opacity-60 flex items-center gap-2"
-              >
-                {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                {submitText}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
   );
 }

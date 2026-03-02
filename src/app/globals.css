@@ -34,3 +34,36 @@ h5,
 h6 {
   font-family: var(--font-playfair), serif;
 }
+/* ===== Modern AntD Table ===== */
+
+.custom-data-table .ant-table {
+  border-radius: 12px;
+}
+
+/* REMOVE vertical borders completely */
+.custom-data-table .ant-table-cell {
+  border-inline-end: none !important;
+}
+
+/* soft horizontal lines */
+.custom-data-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* header styling */
+.custom-data-table .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* hover interaction */
+.custom-data-table .ant-table-tbody > tr:hover > td {
+  background: #fff7ed;
+  transition: background 0.2s ease;
+}
+
+/* remove last row border */
+.custom-data-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
