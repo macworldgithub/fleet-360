@@ -58,7 +58,25 @@ const Navbar: React.FC = () => {
         </nav>
 
         {/* CTA BUTTONS */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-4 ml-6">
+          {agency && (
+            <button
+              type="button"
+              onClick={() => {
+                if (agency.role === "PRINCIPAL") {
+                  router.push("/principal");
+                } else if (agency.role === "FLEET_MANAGER") {
+                  router.push("/fleet-manager");
+                }
+              }}
+              className="flex items-center gap-2 border-2 border-[#C46A0A] text-[#C46A0A] px-3.5 py-1.5 text-[10px] font-bold tracking-widest hover:bg-[#C46A0A] hover:text-white transition uppercase rounded-sm"
+            >
+              {agency.role === "PRINCIPAL"
+                ? "PRINCIPAL DASHBOARD"
+                : "FLEET MANAGER DASHBOARD"}
+            </button>
+          )}
+
           <Link
             href="#contact"
             className="flex items-center gap-2 bg-[#C46A0A] text-white px-8 py-3.5 text-xs font-bold tracking-widest hover:bg-[#a85908] transition uppercase rounded-sm"
@@ -176,6 +194,23 @@ const Navbar: React.FC = () => {
                     Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
                   </p>
                 </div>
+                {agency && (
+                  <button
+                    onClick={() => {
+                      if (agency.role === "PRINCIPAL") {
+                        router.push("/principal");
+                      } else if (agency.role === "FLEET_MANAGER") {
+                        router.push("/fleet-manager");
+                      }
+                      setOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 mb-3 border-2 border-[#C46A0A] text-[#C46A0A] px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#C46A0A] hover:text-white transition rounded-sm"
+                  >
+                    {agency.role === "PRINCIPAL"
+                      ? "Principal Dashboard"
+                      : "Fleet Manager Dashboard"}
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     handleLogout();
