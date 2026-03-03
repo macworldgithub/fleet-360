@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Phone, LogIn, User, LogOut } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/src/api/auth";
 
 const Navbar: React.FC = () => {
@@ -15,6 +16,7 @@ const Navbar: React.FC = () => {
   const handleLogout = () => {
     logout();
     setProfileOpen(false);
+    toast.success("Logged out successfully!");
     router.push("/");
   };
 
@@ -106,10 +108,16 @@ const Navbar: React.FC = () => {
                       {agency?.contactEmail}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      Role: <span className="font-medium text-gray-900">{agency?.role}</span>
+                      Role:{" "}
+                      <span className="font-medium text-gray-900">
+                        {agency?.role}
+                      </span>
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
+                      Tier:{" "}
+                      <span className="font-medium text-gray-900">
+                        {agency?.subscriptionTier}
+                      </span>
                     </p>
                   </div>
                   <button
@@ -188,10 +196,16 @@ const Navbar: React.FC = () => {
                     {agency?.contactEmail}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Role: <span className="font-medium text-gray-900">{agency?.role}</span>
+                    Role:{" "}
+                    <span className="font-medium text-gray-900">
+                      {agency?.role}
+                    </span>
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Tier: <span className="font-medium text-gray-900">{agency?.subscriptionTier}</span>
+                    Tier:{" "}
+                    <span className="font-medium text-gray-900">
+                      {agency?.subscriptionTier}
+                    </span>
                   </p>
                 </div>
                 {agency && (

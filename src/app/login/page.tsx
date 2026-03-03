@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   loginAgency,
   setAuthTokens,
@@ -40,6 +41,7 @@ export default function LoginPage() {
     try {
       const res = await loginAgency(form);
       setAuthTokens(res);
+      toast.success("Login successful!");
       router.push("/");
     } catch (err: unknown) {
       const apiErr = err as ApiError;
