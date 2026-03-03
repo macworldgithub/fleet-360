@@ -21,3 +21,13 @@ export async function fetchDrivers(): Promise<Driver[]> {
 export async function deleteDriver(driverId: string): Promise<void> {
   await apiClient.delete(`/drivers/${driverId}`);
 }
+
+export async function assignVehicleToDriver(
+  driverId: string,
+  vehicleId: string,
+): Promise<Driver> {
+  const res = await apiClient.post(
+    `/drivers/${driverId}/assign-vehicle/${vehicleId}`,
+  );
+  return res.data;
+}

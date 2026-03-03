@@ -41,7 +41,14 @@ export interface Vehicle {
 
 export type VehicleCreatePayload = Omit<
   Vehicle,
-  "_id" | "agencyId" | "requestedBy" | "createdBy" | "requestedAt" | "createdAt" | "updatedAt" | "currentDriverId"
+  | "_id"
+  | "agencyId"
+  | "requestedBy"
+  | "createdBy"
+  | "requestedAt"
+  | "createdAt"
+  | "updatedAt"
+  | "currentDriverId"
 >;
 
 export type VehicleUpdatePayload = Partial<VehicleCreatePayload>;
