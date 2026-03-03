@@ -1,0 +1,23 @@
+import apiClient from "@/src/api/http";
+
+export interface Driver {
+  _id: string;
+  agencyId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  driverLicenseNumber: string;
+  assignedVehicle: string | null;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export async function fetchDrivers(): Promise<Driver[]> {
+  const res = await apiClient.get<Driver[]>("/drivers");
+  return res.data;
+}
+
+export async function deleteDriver(driverId: string): Promise<void> {
+  await apiClient.delete(`/drivers/${driverId}`);
+}
