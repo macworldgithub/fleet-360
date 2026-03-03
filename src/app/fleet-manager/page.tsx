@@ -69,7 +69,7 @@ const FleetManagerDashboard: React.FC = () => {
                 )}
               </button>
               <div className="ml-4 flex items-center">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold px-3 py-2 text-sm rounded-lg shadow-lg">
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold px-3 py-2 text-sm rounded-lg shadow-lg">
                   FM
                 </div>
                 <div className="ml-3">
@@ -86,7 +86,7 @@ const FleetManagerDashboard: React.FC = () => {
                 <User className="w-4 h-4" />
                 <span>{agency?.contactEmail}</span>
               </div>
-              <div className="flex items-center space-x-2 text-xs px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+              <div className="flex items-center space-x-2 text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
                 <TrendingUp className="w-3 h-3" />
                 <span>FLEET MANAGER</span>
               </div>
@@ -116,7 +116,7 @@ const FleetManagerDashboard: React.FC = () => {
                   onClick={() => setActiveTab(item.id as TabType)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     activeTab === item.id
-                      ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md"
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
                       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
