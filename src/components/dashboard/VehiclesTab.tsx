@@ -1,308 +1,465 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-  Car, 
-  Plus, 
-  Search, 
-  Filter,
-  Edit,
-  Trash2,
-  Calendar,
-  Fuel,
-  Settings,
-  AlertTriangle,
-  CheckCircle
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import { DataTable } from "@/src/components/dashboard/DataTable";
+import { FormModal } from "@/src/components/dashboard/FormModal";
+import { officeService, Office } from "@/src/api/office";
+import { vehicleService, Vehicle, VehiclePayload } from "@/src/api/vehicle";
+import { Button, Tag, Space, Select, Popconfirm } from "antd";
+import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import { Building } from "lucide-react";
 
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  registration: string;
-  status: "active" | "maintenance" | "inactive";
-  fuelType: "petrol" | "diesel" | "electric" | "hybrid";
-  lastService: string;
-  nextService: string;
-  driver: string;
-  mileage: number;
-}
+export default function VehiclesTab() {
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [selectedOfficeId, setSelectedOfficeId] = useState<string>("");
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
 
-const VehiclesTab: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [showAddModal, setShowAddModal] = useState(false);
+  // Load offices (assuming you have current agencyId from auth/context)
+  useEffect(() => {
+    const loadOffices = async () => {
+      try {
+        // Replace with your actual agency ID source (context, localStorage, etc.)
+        const agencyId = "69942fa3c94c1a92c87d5e53"; // ← temporary – get from auth
+        const data = await officeService.getOfficesByAgency(agencyId);
+        setOffices(data);
+        if (data.length > 0) {
+          setSelectedOfficeId(data[0]._id);
+        }
+      } catch (err) {
+        toast.error("Failed to load offices");
+      }
+    };
+    loadOffices();
+  }, []);
 
-  const vehicles: Vehicle[] = [
-    {
-      id: "1",
-      make: "Toyota",
-      model: "Camry",
-      year: 2022,
-      registration: "ABC-123",
-      status: "active",
-      fuelType: "hybrid",
-      lastService: "2024-01-15",
-      nextService: "2024-04-15",
-      driver: "John Smith",
-      mileage: 15420
-    },
-    {
-      id: "2",
-      make: "Ford",
-      model: "Ranger",
-      year: 2023,
-      registration: "XYZ-789",
-      status: "maintenance",
-      fuelType: "diesel",
-      lastService: "2024-02-01",
-      nextService: "2024-05-01",
-      driver: "Sarah Johnson",
-      mileage: 8750
-    },
-    {
-      id: "3",
-      make: "Tesla",
-      model: "Model 3",
-      year: 2023,
-      registration: "EVS-001",
-      status: "active",
-      fuelType: "electric",
-      lastService: "2024-01-20",
-      nextService: "2024-07-20",
-      driver: "Mike Chen",
-      mileage: 12300
-    },
-    {
-      id: "4",
-      make: "Hyundai",
-      model: "i30",
-      year: 2021,
-      registration: "HYU-456",
-      status: "inactive",
-      fuelType: "petrol",
-      lastService: "2023-12-10",
-      nextService: "2024-03-10",
-      driver: "Unassigned",
-      mileage: 28900
+  // Load vehicles when office changes
+  useEffect(() => {
+    if (!selectedOfficeId) {
+      setVehicles([]);
+      return;
     }
-  ];
 
-  const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.registration.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+    const loadVehicles = async () => {
+      setLoading(true);
+      try {
+        const data = await vehicleService.getVehiclesByOffice(selectedOfficeId);
+        setVehicles(data);
+      } catch (err) {
+        toast.error("Failed to load vehicles for this office");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadVehicles();
+  }, [selectedOfficeId]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "maintenance":
-        return "bg-yellow-100 text-yellow-800";
-      case "inactive":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const resetForm = () => {
+    setFormData({});
+    setEditingVehicle(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedOfficeId) {
+      toast.warn("Please select an office first");
+      return;
+    }
+
+    try {
+      const payload: VehiclePayload = {
+        ...formData,
+        officeId: selectedOfficeId,
+      } as VehiclePayload;
+
+      let updatedList: Vehicle[];
+
+      if (editingVehicle) {
+        const updated = await vehicleService.updateVehicle(
+          editingVehicle._id,
+          payload,
+        );
+        updatedList = vehicles.map((v) =>
+          v._id === updated._id ? updated : v,
+        );
+        toast.success("Vehicle updated successfully!");
+      } else {
+        const created = await vehicleService.createVehicle(payload);
+        updatedList = [created, ...vehicles];
+        toast.success("Vehicle added successfully!");
+      }
+
+      setVehicles(updatedList);
+      setModalVisible(false);
+      resetForm();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to save vehicle");
     }
   };
 
-  const getFuelIcon = (fuelType: string) => {
-    switch (fuelType) {
-      case "electric":
-        return "⚡";
-      case "hybrid":
-        return "🔋";
-      case "diesel":
-        return "🛢️";
-      default:
-        return "⛽";
+  const handleDelete = async (vehicleId: string) => {
+    try {
+      await vehicleService.deleteVehicle(vehicleId);
+      setVehicles((prev) => prev.filter((v) => v._id !== vehicleId));
+      toast.success("Vehicle deleted successfully");
+    } catch (err) {
+      toast.error("Failed to delete vehicle");
     }
   };
 
-  const stats = [
-    { label: "Total Vehicles", value: vehicles.length, icon: Car, color: "bg-blue-500" },
-    { label: "Active", value: vehicles.filter(v => v.status === "active").length, icon: CheckCircle, color: "bg-green-500" },
-    { label: "In Maintenance", value: vehicles.filter(v => v.status === "maintenance").length, icon: Settings, color: "bg-yellow-500" },
-    { label: "Service Due", value: vehicles.filter(v => {
-      const nextService = new Date(v.nextService);
-      const today = new Date();
-      const daysUntilService = Math.ceil((nextService.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilService <= 30;
-    }).length, icon: AlertTriangle, color: "bg-red-500" }
+  const openEdit = (record: Vehicle) => {
+    setEditingVehicle(record);
+    setFormData(record);
+    setModalVisible(true);
+  };
+
+  const columns: ColumnsType<Vehicle> = [
+    {
+      title: "VIN",
+      dataIndex: "vin",
+      key: "vin",
+      fixed: "left",
+      render: (text) => <span className="font-mono">{text}</span>,
+    },
+    {
+      title: "Reg. Number",
+      dataIndex: "registrationNumber",
+      key: "registrationNumber",
+    },
+    {
+      title: "Vehicle",
+      key: "vehicle",
+      render: (_, r) => (
+        <div>
+          <div className="font-medium">
+            {r.make} {r.model}
+          </div>
+          <div className="text-xs text-gray-500">
+            {r.year} • {r.color}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Fuel / Status",
+      key: "fuelStatus",
+      render: (_, r) => (
+        <Space direction="vertical" size={0}>
+          <Tag color={r.fuelType === "PETROL" ? "green" : "blue"}>
+            {r.fuelType}
+          </Tag>
+          <Tag color={r.vehicleStatus === "ACTIVATE" ? "success" : "error"}>
+            {r.vehicleStatus}
+          </Tag>
+        </Space>
+      ),
+    },
+    {
+      title: "Odometer",
+      dataIndex: "odometerInKms",
+      key: "odometerInKms",
+      render: (val) => (val ? `${val.toLocaleString()} km` : "—"),
+    },
+    {
+      title: "Purchase",
+      key: "purchase",
+      render: (_, r) => (
+        <div className="text-sm">
+          <div>${r.purchaseCost?.toLocaleString() || "—"}</div>
+          <div className="text-xs text-gray-500">
+            {r.purchaseDate
+              ? new Date(r.purchaseDate).toLocaleDateString()
+              : "—"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "center",
+      width: 140,
+      fixed: "right",
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => openEdit(record)}
+          >
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete Vehicle"
+            description="Are you sure? This cannot be undone."
+            onConfirm={() => handleDelete(record._id)}
+            okText="Yes, Delete"
+            cancelText="No"
+            okButtonProps={{ danger: true }}
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4">
+      {/* Header + Office Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Vehicle Fleet Management</h2>
-          <p className="text-gray-600 mt-1">Manage your agency vehicles and track maintenance schedules</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Vehicles Management
+          </h2>
+          <p className="text-gray-600">
+            Add, view and manage vehicles per office
+          </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Vehicle</span>
-        </button>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search by make, model, or registration..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+        <div className="min-w-[300px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Select Office
+          </label>
+          <Select
+            showSearch
+            placeholder="Choose an office..."
+            value={selectedOfficeId || undefined}
+            onChange={setSelectedOfficeId}
+            className="w-full"
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            options={offices.map((o) => ({
+              value: o._id,
+              label: `${o.officeName} (${o.city}, ${o.state})`,
+            }))}
+          />
         </div>
       </div>
 
-      {/* Vehicles Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehicle
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Registration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Driver
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Mileage
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Next Service
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVehicles.map((vehicle) => (
-                <tr key={vehicle.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-2xl mr-3">{getFuelIcon(vehicle.fuelType)}</div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {vehicle.make} {vehicle.model}
-                        </div>
-                        <div className="text-sm text-gray-500">{vehicle.year}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 font-mono">{vehicle.registration}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(vehicle.status)}`}>
-                      {vehicle.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {vehicle.driver}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {vehicle.mileage.toLocaleString()} km
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(vehicle.nextService).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button className="text-amber-600 hover:text-amber-900">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add Vehicle Modal Placeholder */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Vehicle</h3>
-            <p className="text-gray-600 mb-4">Vehicle addition form would go here...</p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700"
-              >
-                Add Vehicle
-              </button>
-            </div>
-          </div>
+      {selectedOfficeId ? (
+        <DataTable<Vehicle>
+          title="Vehicles in this Office"
+          description="All vehicles assigned to the selected office"
+          dataSource={vehicles}
+          columns={columns}
+          loading={loading}
+          onAddClick={() => {
+            resetForm();
+            setModalVisible(true);
+          }}
+          addButtonText="Add New Vehicle"
+        />
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-10 text-center">
+          <Building className="w-16 h-16 text-amber-600 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-amber-800 mb-2">
+            Select an office to manage vehicles
+          </h3>
+          <p className="text-amber-700">
+            Choose an office from the dropdown above to view or add vehicles.
+          </p>
         </div>
       )}
+
+      {/* Add/Edit Modal */}
+      <FormModal
+        title={editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
+        isOpen={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          resetForm();
+        }}
+        onSubmit={handleSubmit}
+        submitText={editingVehicle ? "Update Vehicle" : "Create Vehicle"}
+        submitLoading={loading}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* VIN */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              VIN <span className="text-red-500">*</span>
+            </label>
+            <input
+              required
+              value={formData.vin || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, vin: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. 1HGCM82633A004399"
+            />
+          </div>
+
+          {/* Registration Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Registration Number
+            </label>
+            <input
+              value={formData.registrationNumber || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, registrationNumber: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. ABC-1234"
+            />
+          </div>
+
+          {/* Make */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Make <span className="text-red-500">*</span>
+            </label>
+            <input
+              required
+              value={formData.make || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, make: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. Toyota"
+            />
+          </div>
+
+          {/* Model */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Model <span className="text-red-500">*</span>
+            </label>
+            <input
+              required
+              value={formData.model || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, model: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. Camry"
+            />
+          </div>
+
+          {/* Year */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Year <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              required
+              value={formData.year || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, year: Number(e.target.value) })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. 2024"
+            />
+          </div>
+
+          {/* Color */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Color
+            </label>
+            <input
+              value={formData.color || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, color: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. White"
+            />
+          </div>
+
+          {/* Fuel Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Fuel Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.fuelType || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, fuelType: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 bg-white"
+            >
+              <option value="">Select fuel type</option>
+              <option value="PETROL">Petrol</option>
+              <option value="DIESEL">Diesel</option>
+              <option value="ELECTRIC">Electric</option>
+              <option value="HYBRID">Hybrid</option>
+            </select>
+          </div>
+
+          {/* Odometer */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Odometer (km)
+            </label>
+            <input
+              type="number"
+              value={formData.odometerInKms || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  odometerInKms: Number(e.target.value),
+                })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="e.g. 15000"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Ownership / Financing Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="leaseType"
+              required
+              value={formData.leaseType || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, leaseType: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 bg-white text-gray-900"
+            >
+              <option value="">Please select</option>
+              <option value="OWNED">Owned outright</option>
+              <option value="LOAN">Under loan / financed</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Vehicle Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.vehicleStatus || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, vehicleStatus: e.target.value })
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 bg-white"
+            >
+              <option value="">Select status</option>
+              <option value="ACTIVATE">Active</option>
+              <option value="DEACTIVATE">Inactive</option>
+              <option value="MAINTENANCE">Under Maintenance</option>
+            </select>
+          </div>
+
+          {/* Add more fields like purchaseDate, cost, leaseType, loan details etc. as needed */}
+        </div>
+      </FormModal>
     </div>
   );
-};
-
-export default VehiclesTab;
+}
