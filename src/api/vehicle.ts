@@ -46,6 +46,9 @@ export type VehicleCreatePayload = Omit<
 
 export type VehicleUpdatePayload = Partial<VehicleCreatePayload>;
 
+// Backwards-compatible alias used in UI layer
+export type VehiclePayload = VehicleCreatePayload;
+
 export const vehicleService = {
   // Get vehicles by officeId
   getVehiclesByOffice: async (officeId: string): Promise<Vehicle[]> => {
@@ -67,6 +70,15 @@ export const vehicleService = {
     payload: VehicleUpdatePayload,
   ): Promise<Vehicle> => {
     const res = await apiClient.patch(`/vehicles/${vehicleId}`, payload);
+    return res.data;
+  },
+
+  // Toggle vehicle status between ACTIVATE and DEACTIVATE
+  toggleStatus: async (vehicleId: string): Promise<Vehicle> => {
+    const res = await apiClient.patch(
+      `/vehicles/${vehicleId}/toggle-status`,
+      {},
+    );
     return res.data;
   },
 

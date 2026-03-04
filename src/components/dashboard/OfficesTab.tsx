@@ -23,6 +23,7 @@ import {
   OfficePayload,
 } from "@/src/api/office";
 import { fetchAgencies } from "@/src/api/agencies";
+import { useAuth } from "@/src/api/auth";
 
 const { Text, Title } = Typography;
 
@@ -37,6 +38,10 @@ type OfficeFormModalProps = {
 };
 
 export default function OfficesTab() {
+  const { agency } = useAuth();
+  const isPrincipal = agency?.role === "PRINCIPAL";
+  const isFleetManager = agency?.role === "FLEET_MANAGER";
+
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [selectedAgencyId, setSelectedAgencyId] = useState<string>("");
   const [offices, setOffices] = useState<Office[]>([]);
@@ -63,6 +68,8 @@ export default function OfficesTab() {
   });
 
   useEffect(() => {
+    if (!isPrincipal) return;
+
     const loadAgencies = async () => {
       try {
         const data = await fetchAgencies();
@@ -76,7 +83,12 @@ export default function OfficesTab() {
       }
     };
     loadAgencies();
-  }, []);
+  }, [isPrincipal]);
+
+  useEffect(() => {
+    if (!isFleetManager || !agency?.id) return;
+    setSelectedAgencyId(agency.id);
+  }, [isFleetManager, agency]);
 
   useEffect(() => {
     if (!selectedAgencyId) {
@@ -359,26 +371,28 @@ export default function OfficesTab() {
           <Text type="secondary">Manage offices for each agency</Text>
         </div>
 
-        <div className="min-w-[240px]">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Agency
-          </label>
-          <div className="relative">
-            <select
-              value={selectedAgencyId}
-              onChange={(e) => setSelectedAgencyId(e.target.value)}
-              className="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 appearance-none text-gray-900"
-            >
-              <option value="">-- Select Agency --</option>
-              {agencies.map((a) => (
-                <option key={a._id} value={a._id}>
-                  {a.agencyName}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        {isPrincipal && (
+          <div className="min-w-[240px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Agency
+            </label>
+            <div className="relative">
+              <select
+                value={selectedAgencyId}
+                onChange={(e) => setSelectedAgencyId(e.target.value)}
+                className="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 appearance-none text-gray-900"
+              >
+                <option value="">-- Select Agency --</option>
+                {agencies.map((a) => (
+                  <option key={a._id} value={a._id}>
+                    {a.agencyName}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {selectedAgencyId ? (
