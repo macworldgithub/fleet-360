@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "@/src/api/config";
-import { getAccessToken } from "@/src/api/auth";
+import { getAccessToken, clearAuthTokens } from "@/src/api/auth";
 
 // Base URL that already includes the /api prefix
 export const API_BASE_API_URL = `${API_BASE_URL}/api`;
@@ -22,5 +22,19 @@ apiClient.interceptors.request.use((config: any) => {
   }
   return config;
 });
+
+// Handle 401 Unauthorized globally — clear stale tokens and redirect to login
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuthTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default apiClient;

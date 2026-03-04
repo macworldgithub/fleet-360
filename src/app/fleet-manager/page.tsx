@@ -12,6 +12,7 @@ import {
   User,
   TrendingUp,
   Wrench,
+  Route,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -19,8 +20,9 @@ import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import DriversTab from "@/src/components/dashboard/DriversTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
+import TripsTab from "@/src/components/dashboard/TripsTab";
 
-type TabType = "offices" | "vehicles" | "drivers" | "maintenance";
+type TabType = "offices" | "vehicles" | "drivers" | "maintenance" | "trips";
 
 const FleetManagerDashboard: React.FC = () => {
   const router = useRouter();
@@ -39,6 +41,7 @@ const FleetManagerDashboard: React.FC = () => {
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "drivers", label: "Drivers", icon: Users },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "trips", label: "Trips", icon: Route },
   ];
 
   const renderTabContent = () => {
@@ -51,6 +54,8 @@ const FleetManagerDashboard: React.FC = () => {
         return <DriversTab />;
       case "maintenance":
         return <MaintenanceSchedule />;
+      case "trips":
+        return <TripsTab />;
       default:
         return <OfficesTab />;
     }
@@ -119,11 +124,10 @@ const FleetManagerDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeTab === item.id
                       ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
                       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>

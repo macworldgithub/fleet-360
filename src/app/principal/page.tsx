@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Building2, 
-  Car, 
-  MapPin, 
-  Menu, 
-  X, 
+import {
+  Building2,
+  Car,
+  MapPin,
+  Menu,
+  X,
   Home,
   Settings,
   LogOut,
   User,
   TrendingUp,
-  Wrench
+  Wrench,
+  Route
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -20,8 +21,9 @@ import AgencyTab from "@/src/components/dashboard/AgencyTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
+import TripsTab from "@/src/components/dashboard/TripsTab";
 
-type TabType = "agency" | "vehicles" | "offices" | "maintenance";
+type TabType = "agency" | "vehicles" | "offices" | "maintenance" | "trips";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -39,6 +41,7 @@ const PrincipalDashboard: React.FC = () => {
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "offices", label: "Offices", icon: MapPin },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "trips", label: "Trips", icon: Route },
   ];
 
   const renderTabContent = () => {
@@ -51,6 +54,8 @@ const PrincipalDashboard: React.FC = () => {
         return <OfficesTab />;
       case "maintenance":
         return <MaintenanceSchedule />;
+      case "trips":
+        return <TripsTab />;
       default:
         return <AgencyTab agency={agency} />;
     }
@@ -79,7 +84,7 @@ const PrincipalDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
@@ -111,18 +116,17 @@ const PrincipalDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeTab === item.id
                       ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
                 </button>
               );
             })}
-            
+
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={() => router.push("/")}
