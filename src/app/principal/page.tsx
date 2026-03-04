@@ -11,15 +11,17 @@ import {
   Settings,
   LogOut,
   User,
-  TrendingUp
+  TrendingUp,
+  Wrench
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
 import AgencyTab from "@/src/components/dashboard/AgencyTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
+import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
 
-type TabType = "agency" | "vehicles" | "offices";
+type TabType = "agency" | "vehicles" | "offices" | "maintenance";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -36,6 +38,7 @@ const PrincipalDashboard: React.FC = () => {
     { id: "agency", label: "Agency", icon: Building2 },
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "offices", label: "Offices", icon: MapPin },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
   ];
 
   const renderTabContent = () => {
@@ -46,6 +49,8 @@ const PrincipalDashboard: React.FC = () => {
         return <VehiclesTab />;
       case "offices":
         return <OfficesTab />;
+      case "maintenance":
+        return <MaintenanceSchedule />;
       default:
         return <AgencyTab agency={agency} />;
     }

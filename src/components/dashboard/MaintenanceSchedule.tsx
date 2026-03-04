@@ -37,10 +37,14 @@ const MaintenanceSchedule: React.FC = () => {
 
   // Complete maintenance modal: enter actual cost, then show result
   const [completeModalOpen, setCompleteModalOpen] = useState(false);
-  const [completeTarget, setCompleteTarget] = useState<Maintenance | null>(null);
+  const [completeTarget, setCompleteTarget] = useState<Maintenance | null>(
+    null,
+  );
   const [actualCostInput, setActualCostInput] = useState<string>("");
   const [completeSubmitting, setCompleteSubmitting] = useState(false);
-  const [completedResult, setCompletedResult] = useState<Maintenance | null>(null);
+  const [completedResult, setCompletedResult] = useState<Maintenance | null>(
+    null,
+  );
 
   const loadByStatus = async (selectedStatus: MaintenanceStatus) => {
     setLoading(true);
@@ -71,12 +75,12 @@ const MaintenanceSchedule: React.FC = () => {
 
   const handleStatusChange = async (
     record: Maintenance,
-    newStatus: "APPROVED" | "REJECTED" | "COMPLETED"
+    newStatus: "APPROVED" | "REJECTED" | "COMPLETED",
   ) => {
     if (newStatus === "COMPLETED") {
       setCompleteTarget(record);
       setActualCostInput(
-        record.actualCost != null ? String(record.actualCost) : ""
+        record.actualCost != null ? String(record.actualCost) : "",
       );
       setCompletedResult(null);
       setCompleteModalOpen(true);
@@ -88,12 +92,12 @@ const MaintenanceSchedule: React.FC = () => {
         status: newStatus,
       });
       setItems((prev) =>
-        prev.map((m) => (m._id === updated._id ? updated : m))
+        prev.map((m) => (m._id === updated._id ? updated : m)),
       );
       toast.success(
         newStatus === "REJECTED"
           ? "Maintenance rejected"
-          : "Maintenance approved"
+          : "Maintenance approved",
       );
     } catch (err: any) {
       toast.error(err?.message || "Failed to update status");
@@ -112,13 +116,16 @@ const MaintenanceSchedule: React.FC = () => {
     }
     try {
       setCompleteSubmitting(true);
-      const updated = await maintenanceService.updateStatus(completeTarget._id, {
-        status: "COMPLETED",
-        actualCost: cost,
-      });
+      const updated = await maintenanceService.updateStatus(
+        completeTarget._id,
+        {
+          status: "COMPLETED",
+          actualCost: cost,
+        },
+      );
       setCompletedResult(updated);
       setItems((prev) =>
-        prev.map((m) => (m._id === updated._id ? updated : m))
+        prev.map((m) => (m._id === updated._id ? updated : m)),
       );
       toast.success("Maintenance completed");
     } catch (err: any) {
@@ -148,7 +155,7 @@ const MaintenanceSchedule: React.FC = () => {
       case "REJECTED":
         return "error";
       case "COMPLETED":
-        return "default";
+        return "success";
       default:
         return "default";
     }
@@ -217,11 +224,7 @@ const MaintenanceSchedule: React.FC = () => {
               ];
 
         return (
-          <Dropdown
-            trigger={["click"]}
-            placement="bottomLeft"
-            menu={{ items }}
-          >
+          <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items }}>
             <Tag
               color={statusTagColor(s)}
               className="cursor-pointer select-none inline-flex items-center gap-1"
@@ -236,15 +239,13 @@ const MaintenanceSchedule: React.FC = () => {
       title: "Scheduled Date",
       dataIndex: "scheduledServiceDate",
       key: "scheduledServiceDate",
-      render: (d) =>
-        d ? new Date(d).toLocaleDateString() : "—",
+      render: (d) => (d ? new Date(d).toLocaleDateString() : "—"),
     },
     {
       title: "Completed At",
       dataIndex: "completedAt",
       key: "completedAt",
-      render: (d) =>
-        d ? new Date(d).toLocaleDateString() : "—",
+      render: (d) => (d ? new Date(d).toLocaleDateString() : "—"),
     },
     {
       title: "Actions",
@@ -328,7 +329,7 @@ const MaintenanceSchedule: React.FC = () => {
           setDetailOpen(false);
         }}
         submitText="Close"
-        submitDisabled
+        cancelText=""
         width="max-w-3xl"
       >
         {detailLoading ? (
@@ -434,7 +435,9 @@ const MaintenanceSchedule: React.FC = () => {
 
       {/* Complete maintenance: enter actual cost, then show result */}
       <FormModal
-        title={completedResult ? "Maintenance Completed" : "Complete Maintenance"}
+        title={
+          completedResult ? "Maintenance Completed" : "Complete Maintenance"
+        }
         isOpen={completeModalOpen}
         onClose={closeCompleteModal}
         onSubmit={(e) => {
@@ -452,7 +455,8 @@ const MaintenanceSchedule: React.FC = () => {
               Actual cost
             </Text>
             <p className="text-xl font-bold text-gray-900">
-              ${completedResult.actualCost != null
+              $
+              {completedResult.actualCost != null
                 ? Number(completedResult.actualCost).toLocaleString()
                 : "—"}
             </p>
@@ -480,4 +484,3 @@ const MaintenanceSchedule: React.FC = () => {
 };
 
 export default MaintenanceSchedule;
-
