@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Building2, 
-  Car, 
-  MapPin, 
-  Menu, 
-  X, 
+import {
+  Building2,
+  Car,
+  MapPin,
+  Menu,
+  X,
   Home,
   Settings,
   LogOut,
   User,
   TrendingUp,
-  Wrench
+  Wrench,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -20,8 +20,9 @@ import AgencyTab from "@/src/components/dashboard/AgencyTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
+import IncidentsTab from "@/src/components/dashboard/incidents";
 
-type TabType = "agency" | "vehicles" | "offices" | "maintenance";
+type TabType = "agency" | "vehicles" | "offices" | "maintenance" | "incidents";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -39,6 +40,7 @@ const PrincipalDashboard: React.FC = () => {
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "offices", label: "Offices", icon: MapPin },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "incidents", label: "Incidents", icon: Settings },
   ];
 
   const renderTabContent = () => {
@@ -51,6 +53,8 @@ const PrincipalDashboard: React.FC = () => {
         return <OfficesTab />;
       case "maintenance":
         return <MaintenanceSchedule />;
+      case "incidents":
+        return <IncidentsTab />;
       default:
         return <AgencyTab agency={agency} />;
     }
@@ -67,19 +71,25 @@ const PrincipalDashboard: React.FC = () => {
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
               >
-                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {sidebarOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
               <div className="ml-4 flex items-center">
                 <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold px-3 py-2 text-sm rounded-lg shadow-lg">
                   AG
                 </div>
                 <div className="ml-3">
-                  <h1 className="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Principal Dashboard
+                  </h1>
                   <p className="text-sm text-gray-500">{agency?.agencyName}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
@@ -103,7 +113,9 @@ const PrincipalDashboard: React.FC = () => {
 
       <div className="flex min-h-[calc(100vh-6rem)]">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}>
+        <aside
+          className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}
+        >
           <nav className="p-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -113,8 +125,8 @@ const PrincipalDashboard: React.FC = () => {
                   onClick={() => setActiveTab(item.id as TabType)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     activeTab === item.id
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -122,7 +134,7 @@ const PrincipalDashboard: React.FC = () => {
                 </button>
               );
             })}
-            
+
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={() => router.push("/")}
@@ -137,9 +149,7 @@ const PrincipalDashboard: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            {renderTabContent()}
-          </div>
+          <div className="max-w-7xl mx-auto">{renderTabContent()}</div>
         </main>
       </div>
     </div>

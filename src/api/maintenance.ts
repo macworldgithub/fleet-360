@@ -34,7 +34,6 @@ export interface Maintenance {
 }
 
 export const maintenanceService = {
-  // List maintenance by status
   getByStatus: async (status: MaintenanceStatus): Promise<Maintenance[]> => {
     const res = await apiClient.get(`/maintenance`, {
       params: { status },
@@ -42,13 +41,11 @@ export const maintenanceService = {
     return res.data;
   },
 
-  // Get maintenance history/details for a vehicle
   getByVehicle: async (vehicleId: string): Promise<Maintenance[]> => {
     const res = await apiClient.get(`/maintenance/vehicle/${vehicleId}`);
     return res.data;
   },
 
-  // Update maintenance status (APPROVE, REJECT, or COMPLETE)
   updateStatus: async (
     maintenanceId: string,
     payload: { status: MaintenanceStatus; actualCost?: number }
