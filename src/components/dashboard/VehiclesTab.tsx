@@ -4,41 +4,76 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
-import { officeService, Office } from "@/src/api/office";
+import { officeService, Office, AgencyOption } from "@/src/api/office";
 import { vehicleService, Vehicle, VehiclePayload } from "@/src/api/vehicle";
-import { Button, Tag, Space, Select, Popconfirm } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { fetchAgencies } from "@/src/api/agencies";
+import { Button, Tag, Space, Select, Popconfirm, Dropdown } from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  MoreOutlined,
+} from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { Building } from "lucide-react";
+import { Building, Briefcase } from "lucide-react";
 
 export default function VehiclesTab() {
+  const [agencies, setAgencies] = useState<AgencyOption[]>([]);
+  const [selectedAgencyId, setSelectedAgencyId] = useState<string>("");
   const [offices, setOffices] = useState<Office[]>([]);
   const [selectedOfficeId, setSelectedOfficeId] = useState<string>("");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
+  const [officesLoading, setOfficesLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
+  const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
-  // Load offices (assuming you have current agencyId from auth/context)
+  
   useEffect(() => {
-    const loadOffices = async () => {
+    const loadAgencies = async () => {
       try {
-        // Replace with your actual agency ID source (context, localStorage, etc.)
-        const agencyId = "69942fa3c94c1a92c87d5e53"; // ← temporary – get from auth
-        const data = await officeService.getOfficesByAgency(agencyId);
+        const data = await fetchAgencies();
+        setAgencies(
+          data.map((a) => ({ _id: a._id, agencyName: a.agencyName })),
+        );
+        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+      } catch (err) {
+        toast.error("Failed to load agencies");
+      }
+    };
+    loadAgencies();
+  }, []);
+
+ 
+  useEffect(() => {
+    if (!selectedAgencyId) {
+      setOffices([]);
+      setSelectedOfficeId("");
+      return;
+    }
+
+    const loadOffices = async () => {
+      setOfficesLoading(true);
+      try {
+        const data = await officeService.getOfficesByAgency(selectedAgencyId);
         setOffices(data);
         if (data.length > 0) {
           setSelectedOfficeId(data[0]._id);
+        } else {
+          setSelectedOfficeId("");
         }
       } catch (err) {
         toast.error("Failed to load offices");
+      } finally {
+        setOfficesLoading(false);
       }
     };
     loadOffices();
-  }, []);
+  }, [selectedAgencyId]);
 
-  // Load vehicles when office changes
+ 
   useEffect(() => {
     if (!selectedOfficeId) {
       setVehicles([]);
@@ -119,6 +154,29 @@ export default function VehiclesTab() {
     setModalVisible(true);
   };
 
+  const handleToggleStatus = async (
+    vehicle: Vehicle,
+    target: "ACTIVATE" | "DEACTIVATE",
+  ) => {
+    if (vehicle.vehicleStatus === target) {
+      return;
+    }
+    try {
+      setStatusLoadingId(vehicle._id);
+      const updated = await vehicleService.toggleStatus(vehicle._id);
+      setVehicles((prev) =>
+        prev.map((v) => (v._id === updated._id ? updated : v)),
+      );
+      toast.success(
+        `Vehicle ${updated.vehicleStatus === "ACTIVATE" ? "activated" : "deactivated"} successfully`,
+      );
+    } catch (err) {
+      toast.error("Failed to update vehicle status");
+    } finally {
+      setStatusLoadingId(null);
+    }
+  };
+
   const columns: ColumnsType<Vehicle> = [
     {
       title: "VIN",
@@ -184,65 +242,163 @@ export default function VehiclesTab() {
       title: "Actions",
       key: "actions",
       align: "center",
-      width: 140,
+      width: 160,
       fixed: "right",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => openEdit(record)}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Delete Vehicle"
-            description="Are you sure? This cannot be undone."
-            onConfirm={() => handleDelete(record._id)}
-            okText="Yes, Delete"
-            cancelText="No"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              Delete
+      render: (_, record) => {
+        const menuItems = [
+          {
+            key: "activate",
+            label: "Active",
+            disabled:
+              statusLoadingId === record._id ||
+              record.vehicleStatus === "ACTIVATE",
+            onClick: () => handleToggleStatus(record, "ACTIVATE"),
+          },
+          {
+            key: "deactivate",
+            label: "Inactive",
+            disabled:
+              statusLoadingId === record._id ||
+              record.vehicleStatus === "DEACTIVATE",
+            onClick: () => handleToggleStatus(record, "DEACTIVATE"),
+          },
+        ];
+
+        return (
+          <Space size="middle">
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => openEdit(record)}
+            >
+              Edit
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+            <Popconfirm
+              title="Delete Vehicle"
+              description="Are you sure? This cannot be undone."
+              onConfirm={() => handleDelete(record._id)}
+              okText="Yes, Delete"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                Delete
+              </Button>
+            </Popconfirm>
+            <Dropdown
+              menu={{ items: menuItems }}
+              trigger={["click"]}
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                icon={<MoreOutlined />}
+                loading={statusLoadingId === record._id}
+              />
+            </Dropdown>
+          </Space>
+        );
+      },
     },
   ];
 
   return (
     <div className="space-y-6 p-4">
-      {/* Header + Office Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Vehicles Management
-          </h2>
-          <p className="text-gray-600">
-            Add, view and manage vehicles per office
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Vehicles Management
+        </h2>
+        <p className="text-gray-600">
+          Add, view and manage vehicles per office
+        </p>
+      </div>
 
-        <div className="min-w-[300px]">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Office
-          </label>
-          <Select
-            showSearch
-            placeholder="Choose an office..."
-            value={selectedOfficeId || undefined}
-            onChange={setSelectedOfficeId}
-            className="w-full"
-            filterOption={(input, option) =>
-              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-            }
-            options={offices.map((o) => ({
-              value: o._id,
-              label: `${o.officeName} (${o.city}, ${o.state})`,
-            }))}
-          />
+     
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+              <Briefcase size={18} className="text-amber-600" />
+              Select Agency
+            </label>
+            <Select
+              showSearch
+              placeholder="Choose an agency..."
+              value={selectedAgencyId || undefined}
+              onChange={setSelectedAgencyId}
+              className="w-full"
+              filterOption={(input, option) =>
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              optionLabelProp="label"
+              options={agencies.map((a) => ({
+                value: a._id,
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Briefcase size={16} className="text-amber-600" />
+                    {a.agencyName}
+                  </div>
+                ),
+              }))}
+              size="large"
+              status={selectedAgencyId ? "success" : "default"}
+              style={{
+                borderRadius: "0.875rem",
+              }}
+            />
+          </div>
+
+         
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+              <Building size={18} className="text-blue-600" />
+              Select Office
+            </label>
+            <Select
+              showSearch
+              placeholder={
+                !selectedAgencyId
+                  ? "Select an agency first..."
+                  : officesLoading
+                    ? "Loading offices..."
+                    : "Choose an office..."
+              }
+              value={selectedOfficeId || undefined}
+              onChange={setSelectedOfficeId}
+              disabled={!selectedAgencyId || officesLoading}
+              loading={officesLoading}
+              className="w-full"
+              filterOption={(input, option) =>
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              optionLabelProp="label"
+              options={offices.map((o) => ({
+                value: o._id,
+                label: (
+                  <div className="flex items-center gap-2">
+                    <Building size={16} className="text-blue-600" />
+                    <div>
+                      <div className="font-medium">{o.officeName}</div>
+                      <div className="text-xs text-gray-500">
+                        {o.city}, {o.state}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              }))}
+              size="large"
+              status={selectedOfficeId ? "success" : "default"}
+              style={{
+                borderRadius: "0.875rem",
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -259,19 +415,33 @@ export default function VehiclesTab() {
           }}
           addButtonText="Add New Vehicle"
         />
+      ) : selectedAgencyId ? (
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+            <Building className="w-8 h-8 text-blue-600" />
+          </div>
+          <h3 className="text-xl font-bold text-blue-900 mb-2">
+            Select an Office
+          </h3>
+          <p className="text-blue-700">
+            Choose an office from the dropdown to view and manage vehicles
+          </p>
+        </div>
       ) : (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-10 text-center">
-          <Building className="w-16 h-16 text-amber-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-amber-800 mb-2">
-            Select an office to manage vehicles
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-12 text-center shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-4">
+            <Briefcase className="w-8 h-8 text-amber-600" />
+          </div>
+          <h3 className="text-xl font-bold text-amber-900 mb-2">
+            Select an Agency First
           </h3>
           <p className="text-amber-700">
-            Choose an office from the dropdown above to view or add vehicles.
+            Choose an agency to view its offices and manage vehicles
           </p>
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+     
       <FormModal
         title={editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
         isOpen={modalVisible}
@@ -284,7 +454,7 @@ export default function VehiclesTab() {
         submitLoading={loading}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* VIN */}
+       
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               VIN <span className="text-red-500">*</span>
@@ -300,7 +470,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Registration Number */}
+         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Registration Number
@@ -331,7 +501,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Model */}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Model <span className="text-red-500">*</span>
@@ -347,7 +517,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Year */}
+         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Year <span className="text-red-500">*</span>
@@ -364,7 +534,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Color */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Color
@@ -379,7 +549,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Fuel Type */}
+      
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Type <span className="text-red-500">*</span>
@@ -400,7 +570,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Odometer */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Odometer (km)
@@ -437,7 +607,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Status */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Vehicle Status <span className="text-red-500">*</span>
@@ -457,7 +627,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Add more fields like purchaseDate, cost, leaseType, loan details etc. as needed */}
+         
         </div>
       </FormModal>
     </div>

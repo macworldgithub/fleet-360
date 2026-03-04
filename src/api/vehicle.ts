@@ -41,10 +41,20 @@ export interface Vehicle {
 
 export type VehicleCreatePayload = Omit<
   Vehicle,
-  "_id" | "agencyId" | "requestedBy" | "createdBy" | "requestedAt" | "createdAt" | "updatedAt" | "currentDriverId"
+  | "_id"
+  | "agencyId"
+  | "requestedBy"
+  | "createdBy"
+  | "requestedAt"
+  | "createdAt"
+  | "updatedAt"
+  | "currentDriverId"
 >;
 
 export type VehicleUpdatePayload = Partial<VehicleCreatePayload>;
+
+
+export type VehiclePayload = VehicleCreatePayload;
 
 export const vehicleService = {
   // Get vehicles by officeId
@@ -55,7 +65,7 @@ export const vehicleService = {
     return res.data;
   },
 
-  // Create vehicle (agencyId is auto-filled by backend from token)
+ 
   createVehicle: async (payload: VehicleCreatePayload): Promise<Vehicle> => {
     const res = await apiClient.post(`/vehicles`, payload);
     return res.data;
@@ -70,7 +80,16 @@ export const vehicleService = {
     return res.data;
   },
 
-  // Delete vehicle
+
+  toggleStatus: async (vehicleId: string): Promise<Vehicle> => {
+    const res = await apiClient.patch(
+      `/vehicles/${vehicleId}/toggle-status`,
+      {},
+    );
+    return res.data;
+  },
+
+ 
   deleteVehicle: async (vehicleId: string): Promise<void> => {
     await apiClient.delete(`/vehicles/${vehicleId}`);
   },
