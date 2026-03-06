@@ -148,8 +148,8 @@ const PrincipalDashboard: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">{renderTabContent()}</div>
+        <main className="flex-1 p-6 overflow-hidden">
+          <div className="w-full h-full overflow-auto">{renderTabContent()}</div>
         </main>
       </div>
     </div>
