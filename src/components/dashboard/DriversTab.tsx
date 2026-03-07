@@ -11,6 +11,7 @@ import {
   Trash2,
   AlertTriangle,
   MapPin,
+  X,
 } from "lucide-react";
 
 import { DataTable } from "@/src/components/dashboard/DataTable";
@@ -19,6 +20,7 @@ import {
   fetchDrivers,
   deleteDriver,
   assignVehicleToDriver,
+  unassignVehicleFromDriver,
   type Driver,
 } from "@/src/api/drivers";
 
@@ -66,6 +68,11 @@ const DriversTab: React.FC = () => {
   const [assignLoading, setAssignLoading] = useState(false);
 
   const [agencyInfo, setAgencyInfo] = useState<any>(null);
+
+  // Unassign states
+  const [unassignModalOpen, setUnassignModalOpen] = useState(false);
+  const [driverToUnassign, setDriverToUnassign] = useState<Driver | null>(null);
+  const [unassignLoading, setUnassignLoading] = useState(false);
 
   // Get agency info from localStorage (client-side only)
 
@@ -217,6 +224,11 @@ const DriversTab: React.FC = () => {
     setAssignModalOpen(true);
   };
 
+  const openUnassignModal = (driver: Driver) => {
+    setDriverToUnassign(driver);
+    setUnassignModalOpen(true);
+  };
+
   const handleAssignVehicle = async () => {
     if (!selectedDriver || !selectedVehicleId) return;
 
@@ -254,6 +266,41 @@ const DriversTab: React.FC = () => {
       toast.error("Failed to assign vehicle. Please try again.");
     } finally {
       setAssignLoading(false);
+    }
+  };
+
+  const handleUnassignVehicle = async () => {
+    if (!driverToUnassign || !driverToUnassign.assignedVehicle) return;
+
+    try {
+      setUnassignLoading(true);
+
+      // Extract vehicle ID from assignedVehicle (it could be string or object)
+      const vehicleId = typeof driverToUnassign.assignedVehicle === 'string' 
+        ? driverToUnassign.assignedVehicle 
+        : (driverToUnassign.assignedVehicle as any)._id;
+
+      const updatedDriver = await unassignVehicleFromDriver(
+        driverToUnassign._id,
+        vehicleId,
+      );
+
+      // Update drivers list with unassigned vehicle
+      setDrivers((prev) =>
+        prev.map((driver) =>
+          driver._id === updatedDriver._id ? updatedDriver : driver,
+        ),
+      );
+
+      setUnassignModalOpen(false);
+      setDriverToUnassign(null);
+
+      toast.success("Vehicle unassigned successfully!");
+    } catch (err) {
+      console.error("Failed to unassign vehicle", err);
+      toast.error("Failed to unassign vehicle. Please try again.");
+    } finally {
+      setUnassignLoading(false);
     }
   };
 
@@ -352,21 +399,29 @@ const DriversTab: React.FC = () => {
 
       render: (_, record) => (
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => openAssignModal(record)}
-            className="flex items-center space-x-2 px-3 py-2 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors"
-          >
-            <Car className="w-4 h-4" />
-
-            <span>Assign</span>
-          </button>
+          {record.assignedVehicle ? (
+            <button
+              onClick={() => openUnassignModal(record)}
+              className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span>Unassign</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => openAssignModal(record)}
+              className="flex items-center space-x-2 px-3 py-2 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors"
+            >
+              <Car className="w-4 h-4" />
+              <span>Assign</span>
+            </button>
+          )}
 
           <button
             onClick={() => openDeleteModal(record)}
             className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
           >
             <Trash2 className="w-4 h-4" />
-
             <span>Delete</span>
           </button>
         </div>
@@ -571,6 +626,54 @@ const DriversTab: React.FC = () => {
                 disabled={!selectedVehicleId || assignLoading}
               >
                 {assignLoading ? "Assigning..." : "Assign Vehicle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unassign Vehicle Modal */}
+      {unassignModalOpen && driverToUnassign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-5 border-b border-gray-200 flex items-center gap-3">
+              <X className="w-5 h-5 text-gray-500" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Unassign Vehicle
+              </h3>
+            </div>
+
+            <div className="px-6 py-5 space-y-3">
+              <p className="text-sm text-gray-700">
+                Are you sure you want to unassign the vehicle from{" "}
+                <span className="font-semibold">{driverToUnassign.name}</span>?
+              </p>
+
+              <p className="text-xs text-gray-500">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                onClick={() => {
+                  setUnassignModalOpen(false);
+                  setDriverToUnassign(null);
+                }}
+                disabled={unassignLoading}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-semibold rounded-md bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleUnassignVehicle}
+                disabled={unassignLoading}
+              >
+                {unassignLoading ? "Unassigning..." : "Unassign Vehicle"}
               </button>
             </div>
           </div>

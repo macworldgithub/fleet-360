@@ -31,3 +31,13 @@ export async function assignVehicleToDriver(
   );
   return res.data;
 }
+
+export async function unassignVehicleFromDriver(
+  driverId: string,
+  vehicleId: string,
+): Promise<Driver> {
+  const res = await apiClient.post(
+    `/drivers/${driverId}/unassign-vehicle/${vehicleId}`,
+  );
+  return res.data;
+}
