@@ -18,6 +18,12 @@ export async function fetchDrivers(): Promise<Driver[]> {
   return res.data;
 }
 
+// New function for principals to fetch all drivers across agencies
+export async function fetchAllDrivers(): Promise<Driver[]> {
+  const res = await apiClient.get<Driver[]>("/drivers/all");
+  return res.data;
+}
+
 export async function deleteDriver(driverId: string): Promise<void> {
   await apiClient.delete(`/drivers/${driverId}`);
 }
