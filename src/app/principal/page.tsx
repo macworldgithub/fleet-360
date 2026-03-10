@@ -5,7 +5,6 @@ import {
   Building2,
   Car,
   MapPin,
-  Fuel,
   Menu,
   X,
   Home,
@@ -13,6 +12,7 @@ import {
   LogOut,
   User,
   TrendingUp,
+  Wrench,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -21,10 +21,8 @@ import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
 import IncidentsTab from "@/src/components/dashboard/incidents";
-import PrincipalDriversTab from "@/src/components/dashboard/PrincipalDriversTab";
-import Fueltracking from "@/src/components/dashboard/Fueltracking";
 
-type TabType = "agency" | "vehicles" | "offices" | "fueltracking" | "incidents";
+type TabType = "agency" | "vehicles" | "offices" | "maintenance" | "incidents";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -40,11 +38,9 @@ const PrincipalDashboard: React.FC = () => {
   const menuItems = [
     { id: "agency", label: "Agency", icon: Building2 },
     { id: "vehicles", label: "Vehicles", icon: Car },
-    { id: "drivers", label: "Drivers", icon: Users },
     { id: "offices", label: "Offices", icon: MapPin },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "incidents", label: "Incidents", icon: Settings },
-    { id: "fueltracking", label: "Fuel Tracking", icon: Fuel },
   ];
 
   const renderTabContent = () => {
@@ -53,16 +49,12 @@ const PrincipalDashboard: React.FC = () => {
         return <AgencyTab agency={agency} />;
       case "vehicles":
         return <VehiclesTab />;
-      case "drivers":
-        return <PrincipalDriversTab />;
       case "offices":
         return <OfficesTab />;
       case "maintenance":
         return <MaintenanceSchedule />;
       case "incidents":
         return <IncidentsTab />;
-      case "fueltracking":
-        return <Fueltracking />;
       default:
         return <AgencyTab agency={agency} />;
     }
@@ -156,8 +148,8 @@ const PrincipalDashboard: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-hidden">
-          <div className="w-full h-full overflow-auto">{renderTabContent()}</div>
+        <main className="flex-1 p-6">
+          <div className="max-w-7xl mx-auto">{renderTabContent()}</div>
         </main>
       </div>
     </div>

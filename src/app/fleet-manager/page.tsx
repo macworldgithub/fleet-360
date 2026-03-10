@@ -19,9 +19,8 @@ import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import DriversTab from "@/src/components/dashboard/DriversTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
-import IncidentsTab from "@/src/components/dashboard/incidents";
 
-type TabType = "offices" | "vehicles" | "drivers" | "maintenance" | "incidents";
+type TabType = "offices" | "vehicles" | "drivers" | "maintenance";
 
 const FleetManagerDashboard: React.FC = () => {
   const router = useRouter();
@@ -40,7 +39,6 @@ const FleetManagerDashboard: React.FC = () => {
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "drivers", label: "Drivers", icon: Users },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
-    { id: "incidents", label: "Incidents", icon: Users },
   ];
 
   const renderTabContent = () => {
@@ -53,8 +51,6 @@ const FleetManagerDashboard: React.FC = () => {
         return <DriversTab />;
       case "maintenance":
         return <MaintenanceSchedule />;
-      case "incidents":
-        return <IncidentsTab />;
       default:
         return <OfficesTab />;
     }
