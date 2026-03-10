@@ -14,6 +14,7 @@ import { Button, Tag, Space, Select } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { Building } from "lucide-react";
+import { useAuth } from "@/src/api/auth"; // added to access logged in agency info
 
 export default function IncidentsTab() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -29,21 +30,29 @@ export default function IncidentsTab() {
   const [deleteTarget, setDeleteTarget] = useState<Incident | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
-  // Load all vehicles once (you can filter later if needed)
+  const { agency } = useAuth();
+
+  // Load all vehicles once (filtered by agency when available)
   useEffect(() => {
     const loadVehicles = async () => {
       try {
         const allVehicles = await vehicleService.getVehiclesByOffice(""); 
-        setVehicles(allVehicles);
-        if (allVehicles.length > 0) {
-          setSelectedVehicleId(allVehicles[0]._id);
+        // if we have agency info, filter vehicles by that agency's id
+        const filtered = agency
+          ? allVehicles.filter((v) => v.agencyId === agency.id)
+          : allVehicles;
+        setVehicles(filtered);
+        if (filtered.length > 0) {
+          setSelectedVehicleId(filtered[0]._id);
+        } else {
+          setSelectedVehicleId("");
         }
       } catch (err) {
         toast.error("Failed to load vehicles");
       }
     };
     loadVehicles();
-  }, []);
+  }, [agency]);
 
   useEffect(() => {
     if (!selectedVehicleId) {
