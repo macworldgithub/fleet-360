@@ -30,7 +30,7 @@ export default function VehiclesTab() {
   const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
-  // Load agencies on mount
+  
   useEffect(() => {
     const loadAgencies = async () => {
       try {
@@ -46,7 +46,7 @@ export default function VehiclesTab() {
     loadAgencies();
   }, []);
 
-  // Load offices when agency changes
+ 
   useEffect(() => {
     if (!selectedAgencyId) {
       setOffices([]);
@@ -73,7 +73,7 @@ export default function VehiclesTab() {
     loadOffices();
   }, [selectedAgencyId]);
 
-  // Load vehicles when office changes
+ 
   useEffect(() => {
     if (!selectedOfficeId) {
       setVehicles([]);
@@ -154,7 +154,10 @@ export default function VehiclesTab() {
     setModalVisible(true);
   };
 
-  const handleToggleStatus = async (vehicle: Vehicle, target: "ACTIVATE" | "DEACTIVATE") => {
+  const handleToggleStatus = async (
+    vehicle: Vehicle,
+    target: "ACTIVATE" | "DEACTIVATE",
+  ) => {
     if (vehicle.vehicleStatus === target) {
       return;
     }
@@ -311,10 +314,10 @@ export default function VehiclesTab() {
         </p>
       </div>
 
-      {/* Selectors Card */}
+     
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Agency Selector */}
+          
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Briefcase size={18} className="text-amber-600" />
@@ -349,7 +352,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Office Selector */}
+         
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Building size={18} className="text-blue-600" />
@@ -438,7 +441,7 @@ export default function VehiclesTab() {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+     
       <FormModal
         title={editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
         isOpen={modalVisible}
@@ -451,7 +454,7 @@ export default function VehiclesTab() {
         submitLoading={loading}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* VIN */}
+       
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               VIN <span className="text-red-500">*</span>
@@ -467,7 +470,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Registration Number */}
+         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Registration Number
@@ -498,7 +501,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Model */}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Model <span className="text-red-500">*</span>
@@ -514,7 +517,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Year */}
+         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Year <span className="text-red-500">*</span>
@@ -531,7 +534,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Color */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Color
@@ -546,7 +549,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Fuel Type */}
+      
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Type <span className="text-red-500">*</span>
@@ -567,7 +570,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Odometer */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Odometer (km)
@@ -604,7 +607,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Status */}
+        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Vehicle Status <span className="text-red-500">*</span>
@@ -624,7 +627,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Add more fields like purchaseDate, cost, leaseType, loan details etc. as needed */}
+         
         </div>
       </FormModal>
     </div>
