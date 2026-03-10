@@ -84,10 +84,16 @@ const PrincipalDriversTab: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log("Loading all drivers for principal...");
         const data = await fetchAllDrivers(); // Use fetchAllDrivers for principals
+        console.log("All drivers response:", data);
         setDrivers(data);
       } catch (err) {
         console.error("Failed to load drivers", err);
+        console.error(
+          "Error details:",
+          (err as any).response?.data || (err as any).message,
+        );
         setError("Unable to load drivers. Please try again later.");
       } finally {
         setLoading(false);
@@ -96,11 +102,17 @@ const PrincipalDriversTab: React.FC = () => {
 
     const loadAgencies = async () => {
       try {
+        console.log("Loading agencies for principal...");
         const data = await fetchAgencies();
+        console.log("Agencies response:", data);
         setAgencies(data);
         if (data.length > 0) setSelectedAgencyId(data[0]._id);
       } catch (err) {
         console.error("Failed to load agencies", err);
+        console.error(
+          "Error details:",
+          (err as any).response?.data || (err as any).message,
+        );
         toast.error("Failed to load agencies");
       }
     };
@@ -191,15 +203,17 @@ const PrincipalDriversTab: React.FC = () => {
     setSelectedVehicleId("");
     setVehicles([]);
     setAssignModalOpen(true);
-    
+
     // Load agencies for assignment
-    fetchAgencies().then(data => {
-      setAgencies(data);
-      if (data.length > 0) setSelectedAgencyId(data[0]._id);
-    }).catch(err => {
-      console.error("Failed to load agencies", err);
-      toast.error("Failed to load agencies");
-    });
+    fetchAgencies()
+      .then((data) => {
+        setAgencies(data);
+        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+      })
+      .catch((err) => {
+        console.error("Failed to load agencies", err);
+        toast.error("Failed to load agencies");
+      });
   };
 
   const openUnassignModal = (driver: Driver) => {
@@ -248,9 +262,10 @@ const PrincipalDriversTab: React.FC = () => {
       setUnassignLoading(true);
 
       // Extract vehicle ID from assignedVehicle (it could be string or object)
-      const vehicleId = typeof driverToUnassign.assignedVehicle === 'string' 
-        ? driverToUnassign.assignedVehicle 
-        : (driverToUnassign.assignedVehicle as any)._id;
+      const vehicleId =
+        typeof driverToUnassign.assignedVehicle === "string"
+          ? driverToUnassign.assignedVehicle
+          : (driverToUnassign.assignedVehicle as any)._id;
 
       const updatedDriver = await unassignVehicleFromDriver(
         driverToUnassign._id,
@@ -297,11 +312,11 @@ const PrincipalDriversTab: React.FC = () => {
       title: "Agency",
       key: "agency",
       render: (_, record) => {
-        const agency = agencies.find(a => a._id === record.agencyId);
+        const agency = agencies.find((a) => a._id === record.agencyId);
         return (
           <div className="flex items-center space-x-2 text-sm text-gray-700">
             <Building className="w-4 h-4 text-gray-400" />
-            <span>{agency?.agencyName || 'Unknown Agency'}</span>
+            <span>{agency?.agencyName || "Unknown Agency"}</span>
           </div>
         );
       },
@@ -578,7 +593,13 @@ const PrincipalDriversTab: React.FC = () => {
 
               {selectedDriver.assignedVehicle && (
                 <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                  Currently assigned: {selectedDriver.assignedVehicle}
+                  Currently assigned:{" "}
+                  {(selectedDriver.assignedVehicle as any).make &&
+                  (selectedDriver.assignedVehicle as any).model
+                    ? `${(selectedDriver.assignedVehicle as any).make} ${(selectedDriver.assignedVehicle as any).model} - ${(selectedDriver.assignedVehicle as any).registrationNumber}`
+                    : typeof selectedDriver.assignedVehicle === "string"
+                      ? selectedDriver.assignedVehicle
+                      : "Assigned Vehicle"}
                 </div>
               )}
             </div>

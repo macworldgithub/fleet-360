@@ -90,7 +90,7 @@ export function DataTable<T extends { key?: string | number; _id?: string }>({
           locale={{ emptyText }}
           pagination={dataSource.length > 10 ? { pageSize: 10 } : false}
           className="agency-table min-w-[800px]"
-          scroll={{ x: 'max-content' }}
+          scroll={{ x: "max-content" }}
           {...tableProps}
         />
       </div>

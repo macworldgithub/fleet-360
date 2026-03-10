@@ -20,7 +20,7 @@ export async function fetchDrivers(): Promise<Driver[]> {
 
 // New function for principals to fetch all drivers across agencies
 export async function fetchAllDrivers(): Promise<Driver[]> {
-  const res = await apiClient.get<Driver[]>("/drivers/all");
+  const res = await apiClient.get<Driver[]>("/drivers");
   return res.data;
 }
 
