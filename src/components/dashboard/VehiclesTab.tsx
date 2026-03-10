@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/src/components/dashboard/DataTable";
@@ -30,7 +29,10 @@ export default function VehiclesTab() {
   const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
-  
+  // NEW: File states for create (displayPhoto is mandatory, vehiclePhotos optional)
+  const [displayPhoto, setDisplayPhoto] = useState<File | null>(null);
+  const [vehiclePhotos, setVehiclePhotos] = useState<File[]>([]);
+
   useEffect(() => {
     const loadAgencies = async () => {
       try {
@@ -46,14 +48,12 @@ export default function VehiclesTab() {
     loadAgencies();
   }, []);
 
- 
   useEffect(() => {
     if (!selectedAgencyId) {
       setOffices([]);
       setSelectedOfficeId("");
       return;
     }
-
     const loadOffices = async () => {
       setOfficesLoading(true);
       try {
@@ -73,13 +73,11 @@ export default function VehiclesTab() {
     loadOffices();
   }, [selectedAgencyId]);
 
- 
   useEffect(() => {
     if (!selectedOfficeId) {
       setVehicles([]);
       return;
     }
-
     const loadVehicles = async () => {
       setLoading(true);
       try {
@@ -95,27 +93,29 @@ export default function VehiclesTab() {
   }, [selectedOfficeId]);
 
   const resetForm = () => {
-    setFormData({});
+    // Default to ACTIVE when creating a new vehicle
+    setFormData({ vehicleStatus: "ACTIVATE" });
     setEditingVehicle(null);
+    setDisplayPhoto(null);
+    setVehiclePhotos([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!selectedOfficeId) {
       toast.warn("Please select an office first");
       return;
     }
 
     try {
-      const payload: VehiclePayload = {
-        ...formData,
-        officeId: selectedOfficeId,
-      } as VehiclePayload;
-
       let updatedList: Vehicle[];
 
       if (editingVehicle) {
+        // Update (JSON) – same as before
+        const payload: VehicleUpdatePayload = {
+          ...formData,
+          officeId: selectedOfficeId,
+        };
         const updated = await vehicleService.updateVehicle(
           editingVehicle._id,
           payload,
@@ -125,7 +125,23 @@ export default function VehiclesTab() {
         );
         toast.success("Vehicle updated successfully!");
       } else {
-        const created = await vehicleService.createVehicle(payload);
+        // CREATE with files (multipart) – integrated with new API
+        if (!displayPhoto) {
+          toast.error("Display photo is required");
+          return;
+        }
+
+        const createPayload: VehicleCreatePayload = {
+          ...formData,
+          officeId: selectedOfficeId,
+        } as VehicleCreatePayload;
+
+        const created = await vehicleService.createVehicle(
+          createPayload,
+          displayPhoto,
+          vehiclePhotos,
+        );
+
         updatedList = [created, ...vehicles];
         toast.success("Vehicle added successfully!");
       }
@@ -263,7 +279,6 @@ export default function VehiclesTab() {
             onClick: () => handleToggleStatus(record, "DEACTIVATE"),
           },
         ];
-
         return (
           <Space size="middle">
             <Button
@@ -314,10 +329,8 @@ export default function VehiclesTab() {
         </p>
       </div>
 
-     
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Briefcase size={18} className="text-amber-600" />
@@ -352,7 +365,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-         
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Building size={18} className="text-blue-600" />
@@ -441,7 +453,6 @@ export default function VehiclesTab() {
         </div>
       )}
 
-     
       <FormModal
         title={editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
         isOpen={modalVisible}
@@ -454,7 +465,7 @@ export default function VehiclesTab() {
         submitLoading={loading}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-       
+          {/* Existing fields (unchanged) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               VIN <span className="text-red-500">*</span>
@@ -470,7 +481,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Registration Number
@@ -485,7 +495,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Make */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Make <span className="text-red-500">*</span>
@@ -501,7 +510,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Model <span className="text-red-500">*</span>
@@ -517,7 +525,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-         
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Year <span className="text-red-500">*</span>
@@ -534,7 +541,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Color
@@ -549,7 +555,6 @@ export default function VehiclesTab() {
             />
           </div>
 
-      
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Type <span className="text-red-500">*</span>
@@ -570,7 +575,6 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-        
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Odometer (km)
@@ -588,12 +592,12 @@ export default function VehiclesTab() {
               placeholder="e.g. 15000"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Ownership / Financing Type <span className="text-red-500">*</span>
             </label>
             <select
-              name="leaseType"
               required
               value={formData.leaseType || ""}
               onChange={(e) =>
@@ -607,7 +611,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-        
+          {/* UPDATED: Vehicle Status dropdown now shows ALL backend statuses, defaults to ACTIVE for new vehicles */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Vehicle Status <span className="text-red-500">*</span>
@@ -623,11 +627,49 @@ export default function VehiclesTab() {
               <option value="">Select status</option>
               <option value="ACTIVATE">Active</option>
               <option value="DEACTIVATE">Inactive</option>
-              <option value="MAINTENANCE">Under Maintenance</option>
+              <option value="IN_MAINTENANCE">Under Maintenance</option>
+              <option value="UNDER_AGREEMENT">Under Agreement</option>
+              <option value="ASSIGNED">Assigned</option>
             </select>
           </div>
 
-         
+          {/* NEW: File upload fields for createVehicle API (displayPhoto required, vehiclePhotos optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Display Photo <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setDisplayPhoto(e.target.files?.[0] || null)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+            />
+            {displayPhoto && (
+              <p className="mt-1 text-xs text-green-600">
+                Selected: {displayPhoto.name}
+              </p>
+            )}
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Additional Vehicle Photos (optional – multiple)
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) =>
+                setVehiclePhotos(Array.from(e.target.files || []))
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+            />
+            {vehiclePhotos.length > 0 && (
+              <p className="mt-1 text-xs text-green-600">
+                Selected {vehiclePhotos.length} photo(s)
+              </p>
+            )}
+          </div>
         </div>
       </FormModal>
     </div>

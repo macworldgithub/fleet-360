@@ -52,8 +52,6 @@ export type VehicleCreatePayload = Omit<
 >;
 
 export type VehicleUpdatePayload = Partial<VehicleCreatePayload>;
-
-
 export type VehiclePayload = VehicleCreatePayload;
 
 export const vehicleService = {
@@ -65,10 +63,40 @@ export const vehicleService = {
     return res.data;
   },
 
- 
-  createVehicle: async (payload: VehicleCreatePayload): Promise<Vehicle> => {
-    const res = await apiClient.post(`/vehicles`, payload);
-    return res.data;
+  // UPDATED: Now supports multipart/form-data with required displayPhoto + optional vehiclePhotos
+  // Backend returns { vehicle: Vehicle, logbookSessionId: any } so we extract .vehicle
+  createVehicle: async (
+    payload: VehicleCreatePayload,
+    displayPhoto: File,
+    vehiclePhotos: File[] = []
+  ): Promise<Vehicle> => {
+    const formData = new FormData();
+
+    // Append all payload fields (numbers, strings, dates are automatically stringified – NestJS handles parsing)
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // Required display photo
+    formData.append("displayPhoto", displayPhoto);
+
+    // Optional gallery photos
+    if (vehiclePhotos.length > 0) {
+      vehiclePhotos.forEach((photo) => {
+        formData.append("vehiclePhotos", photo);
+      });
+    }
+
+    const res = await apiClient.post(`/vehicles`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // Backend wrapper response – return the actual vehicle
+    return res.data.vehicle;
   },
 
   // Update vehicle
@@ -80,7 +108,6 @@ export const vehicleService = {
     return res.data;
   },
 
-
   toggleStatus: async (vehicleId: string): Promise<Vehicle> => {
     const res = await apiClient.patch(
       `/vehicles/${vehicleId}/toggle-status`,
@@ -89,7 +116,6 @@ export const vehicleService = {
     return res.data;
   },
 
- 
   deleteVehicle: async (vehicleId: string): Promise<void> => {
     await apiClient.delete(`/vehicles/${vehicleId}`);
   },
