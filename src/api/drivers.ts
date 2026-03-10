@@ -47,3 +47,11 @@ export async function unassignVehicleFromDriver(
   );
   return res.data;
 }
+
+export async function approveVehicleRequest(vehicleId: string): Promise<void> {
+  await apiClient.patch(`/drivers/approve-vehicle/${vehicleId}`);
+}
+
+export async function rejectVehicleRequest(vehicleId: string): Promise<void> {
+  await apiClient.patch(`/drivers/reject-vehicle/${vehicleId}`);
+}
