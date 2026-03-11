@@ -53,7 +53,7 @@ export type VehicleCreatePayload = Omit<
 
 export type VehicleUpdatePayload = Partial<VehicleCreatePayload>;
 
-// Backwards-compatible alias used in UI layer
+
 export type VehiclePayload = VehicleCreatePayload;
 
 export const vehicleService = {
@@ -65,7 +65,7 @@ export const vehicleService = {
     return res.data;
   },
 
-  // Create vehicle (agencyId is auto-filled by backend from token)
+ 
   createVehicle: async (payload: VehicleCreatePayload): Promise<Vehicle> => {
     const res = await apiClient.post(`/vehicles`, payload);
     return res.data;
@@ -80,7 +80,7 @@ export const vehicleService = {
     return res.data;
   },
 
-  // Toggle vehicle status between ACTIVATE and DEACTIVATE
+
   toggleStatus: async (vehicleId: string): Promise<Vehicle> => {
     const res = await apiClient.patch(
       `/vehicles/${vehicleId}/toggle-status`,
@@ -89,7 +89,7 @@ export const vehicleService = {
     return res.data;
   },
 
-  // Delete vehicle
+ 
   deleteVehicle: async (vehicleId: string): Promise<void> => {
     await apiClient.delete(`/vehicles/${vehicleId}`);
   },
