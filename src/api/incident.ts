@@ -11,7 +11,7 @@ export interface Incident {
   estimatedRepairCost?: number;
   insuranceClaimFiled: boolean;
   policeReportNumber?: string;
-  status: "REPORTED" | "UNDER_INVESTIGATION" | "RESOLVED" | "CLOSED" | string;
+  status: "REPORTED" | "UNDER_REVIEW" | "RESOLVED" | "CLOSED" | string;
   createdAt: string;
   updatedAt: string;
 }

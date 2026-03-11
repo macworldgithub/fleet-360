@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
@@ -14,13 +14,14 @@ import { Button, Tag, Space, Select } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { Building } from "lucide-react";
-import { useAuth } from "@/src/api/auth"; // added to access logged in agency info
+import { useAuth } from "@/src/api/auth"; 
 
 export default function IncidentsTab() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(false);
+  const timersRef = useRef<Record<string, NodeJS.Timeout>>({}); 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [formData, setFormData] = useState<Partial<IncidentCreatePayload>>({});
@@ -80,44 +81,74 @@ export default function IncidentsTab() {
     setEditingIncident(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedVehicleId) {
-      toast.error("Please select a vehicle first");
-      return;
+  // helper to schedule a status update and notify via toast
+  const scheduleStatusUpdate = (
+    incidentId: string,
+    targetStatus: Incident["status"],
+    toastMessage: string,
+  ) => {
+    if (timersRef.current[incidentId]) {
+      return; // already scheduled
     }
-
-    try {
-      const payload: IncidentCreatePayload = {
-        ...formData,
-        vehicleId: selectedVehicleId,
-      } as IncidentCreatePayload;
-
-      let updatedList: Incident[];
-
-      if (editingIncident) {
-        const updated = await incidentService.updateIncident(
-          editingIncident._id,
-          payload,
+    timersRef.current[incidentId] = setTimeout(async () => {
+      try {
+        const updated = await incidentService.updateIncident(incidentId, {
+          status: targetStatus,
+        });
+        setIncidents((prev) =>
+          prev.map((i) => (i._id === updated._id ? updated : i)),
         );
-        updatedList = incidents.map((i) =>
-          i._id === updated._id ? updated : i,
-        );
-        toast.success("Incident updated successfully!");
-      } else {
-        const created = await incidentService.createIncident(payload);
-        updatedList = [created, ...incidents];
-        toast.success("Incident reported successfully!");
+        toast.success(toastMessage);
+      } catch (err) {
+        toast.error("Failed to auto-update incident status");
+      } finally {
+        delete timersRef.current[incidentId];
       }
-
-      setIncidents(updatedList);
-      setModalVisible(false);
-      resetForm();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to save incident");
-    }
+    }, 5000);
   };
+
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!selectedVehicleId) {
+    toast.error("Please select a vehicle first");
+    return;
+  }
+
+  try {
+    const payload: IncidentCreatePayload = {
+      ...formData,
+      vehicleId: selectedVehicleId,
+    } as IncidentCreatePayload;
+
+    let updatedList: Incident[];
+
+    if (editingIncident) {
+      const updated = await incidentService.updateIncident(
+        editingIncident._id,
+        payload
+      );
+
+      updatedList = incidents.map((i) =>
+        i._id === updated._id ? updated : i
+      );
+
+      toast.success("Incident updated successfully!");
+    } else {
+      const created = await incidentService.createIncident(payload);
+
+      updatedList = [created, ...incidents];
+
+      toast.success("Incident reported successfully!");
+    }
+
+    setIncidents(updatedList);
+    setModalVisible(false);
+    resetForm();
+  } catch (err: any) {
+    toast.error(err?.response?.data?.message || "Failed to save incident");
+  }
+};
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -232,6 +263,42 @@ export default function IncidentsTab() {
       ),
     },
   ];
+
+  // watch for newly loaded or updated incidents to trigger automatic transitions
+  useEffect(() => {
+    incidents.forEach((inc) => {
+      if (inc.status === "REPORTED") {
+        scheduleStatusUpdate(
+          inc._id,
+          "UNDER_REVIEW",
+          "Incident status automatically moved to under review",
+        );
+      }
+      if (inc.status === "RESOLVED") {
+        scheduleStatusUpdate(
+          inc._id,
+          "CLOSED",
+          "Incident automatically moved to closed",
+        );
+      }
+    });
+    // clear timers for incidents no longer eligible
+    Object.keys(timersRef.current).forEach((id) => {
+      const exists = incidents.find((i) => i._id === id);
+      if (!exists || (exists.status !== "REPORTED" && exists.status !== "RESOLVED")) {
+        clearTimeout(timersRef.current[id]);
+        delete timersRef.current[id];
+      }
+    });
+  }, [incidents]);
+
+  // clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(timersRef.current).forEach(clearTimeout);
+      timersRef.current = {};
+    };
+  }, []);
 
   return (
     <div className="space-y-6 p-4">
@@ -460,9 +527,8 @@ export default function IncidentsTab() {
             >
               <option value="">Select status</option>
               <option value="REPORTED">Reported</option>
-              <option value="UNDER_INVESTIGATION">Under Investigation</option>
+              <option value="UNDER_REVIEW">Under Review</option>
               <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
             </select>
           </div>
         </div>
