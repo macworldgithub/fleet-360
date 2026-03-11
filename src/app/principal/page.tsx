@@ -5,7 +5,6 @@ import {
   Building2,
   Car,
   MapPin,
-  Fuel,
   Menu,
   X,
   Home,
@@ -13,15 +12,17 @@ import {
   LogOut,
   User,
   TrendingUp,
+  Wrench,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
 import AgencyTab from "@/src/components/dashboard/AgencyTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
-import Fueltracking from "@/src/components/dashboard/Fueltracking";
+import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
+import IncidentsTab from "@/src/components/dashboard/incidents";
 
-type TabType = "agency" | "vehicles" | "offices" | "fueltracking";
+type TabType = "agency" | "vehicles" | "offices" | "maintenance" | "incidents";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -38,7 +39,8 @@ const PrincipalDashboard: React.FC = () => {
     { id: "agency", label: "Agency", icon: Building2 },
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "offices", label: "Offices", icon: MapPin },
-    { id: "fueltracking", label: "Fuel Tracking", icon: Fuel },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "incidents", label: "Incidents", icon: Settings },
   ];
 
   const renderTabContent = () => {
@@ -49,8 +51,10 @@ const PrincipalDashboard: React.FC = () => {
         return <VehiclesTab />;
       case "offices":
         return <OfficesTab />;
-      case "fueltracking":
-        return <Fueltracking />;
+      case "maintenance":
+        return <MaintenanceSchedule />;
+      case "incidents":
+        return <IncidentsTab />;
       default:
         return <AgencyTab agency={agency} />;
     }

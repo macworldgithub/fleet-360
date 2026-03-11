@@ -12,12 +12,14 @@ import {
   AlertTriangle,
   MapPin,
   X,
+  Building,
 } from "lucide-react";
 
 import { DataTable } from "@/src/components/dashboard/DataTable";
 
 import {
   fetchDrivers,
+  fetchAllDrivers,
   deleteDriver,
   assignVehicleToDriver,
   unassignVehicleFromDriver,
@@ -28,70 +30,108 @@ import { officeService, type Office } from "@/src/api/office";
 
 import { vehicleService, type Vehicle } from "@/src/api/vehicle";
 
+import { fetchAgencies } from "@/src/api/agencies";
+
 import type { ColumnsType } from "antd/es/table";
 
 import toast from "react-hot-toast";
 
-const DriversTab: React.FC = () => {
+const PrincipalDriversTab: React.FC = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+
   const [searchValue, setSearchValue] = useState("");
+
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
   const [driverToDelete, setDriverToDelete] = useState<Driver | null>(null);
+
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Assignment states
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+
+  const [agencies, setAgencies] = useState<any[]>([]);
+  const [selectedAgencyId, setSelectedAgencyId] = useState("");
+
   const [offices, setOffices] = useState<Office[]>([]);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
   const [selectedOfficeId, setSelectedOfficeId] = useState("");
+
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
+
   const [officesLoading, setOfficesLoading] = useState(false);
+
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
+
   const [assignLoading, setAssignLoading] = useState(false);
-  const [agencyInfo, setAgencyInfo] = useState<any>(null);
 
   // Unassign states
   const [unassignModalOpen, setUnassignModalOpen] = useState(false);
   const [driverToUnassign, setDriverToUnassign] = useState<Driver | null>(null);
   const [unassignLoading, setUnassignLoading] = useState(false);
 
-  // Get agency info from localStorage (client-side only)
-  useEffect(() => {
-    const agencyStr = localStorage.getItem("agency");
-    if (agencyStr) {
-      setAgencyInfo(JSON.parse(agencyStr));
-    }
-  }, []);
-
+  // Load all drivers and agencies on mount
   useEffect(() => {
     const loadDrivers = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchDrivers();
+        console.log("Loading all drivers for principal...");
+        const data = await fetchAllDrivers(); // Use fetchAllDrivers for principals
+        console.log("All drivers response:", data);
         setDrivers(data);
       } catch (err) {
         console.error("Failed to load drivers", err);
+        console.error(
+          "Error details:",
+          (err as any).response?.data || (err as any).message,
+        );
         setError("Unable to load drivers. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
+    const loadAgencies = async () => {
+      try {
+        console.log("Loading agencies for principal...");
+        const data = await fetchAgencies();
+        console.log("Agencies response:", data);
+        setAgencies(data);
+        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+      } catch (err) {
+        console.error("Failed to load agencies", err);
+        console.error(
+          "Error details:",
+          (err as any).response?.data || (err as any).message,
+        );
+        toast.error("Failed to load agencies");
+      }
+    };
+
+    loadDrivers();
+    loadAgencies();
+  }, []);
+
+  // Load offices when agency changes
+  useEffect(() => {
     const loadOffices = async () => {
-      if (!agencyInfo?.id) {
-        console.log("No agency ID found");
+      if (!selectedAgencyId) {
+        setOffices([]);
         return;
       }
 
-      console.log("Loading offices for agency ID:", agencyInfo.id);
       try {
         setOfficesLoading(true);
-        const data = await officeService.getOfficesByAgency(agencyInfo.id);
-        console.log("Offices API response:", data);
+        const data = await officeService.getOfficesByAgency(selectedAgencyId);
         setOffices(data);
       } catch (err) {
         console.error("Failed to load offices", err);
@@ -101,12 +141,10 @@ const DriversTab: React.FC = () => {
       }
     };
 
-    loadDrivers();
-    if (agencyInfo) {
-      loadOffices();
-    }
-  }, [agencyInfo]);
+    loadOffices();
+  }, [selectedAgencyId]);
 
+  // Load vehicles when office changes
   useEffect(() => {
     const loadVehicles = async () => {
       if (!selectedOfficeId) {
@@ -134,12 +172,16 @@ const DriversTab: React.FC = () => {
 
     try {
       setDeleteLoading(true);
+
       await deleteDriver(driverToDelete._id);
+
       setDrivers((prev) =>
         prev.filter((driver) => driver._id !== driverToDelete._id),
       );
+
       setDeleteModalOpen(false);
       setDriverToDelete(null);
+
       toast.success("Driver deleted successfully!");
     } catch (err) {
       console.error("Failed to delete driver", err);
@@ -156,10 +198,22 @@ const DriversTab: React.FC = () => {
 
   const openAssignModal = (driver: Driver) => {
     setSelectedDriver(driver);
+    setSelectedAgencyId("");
     setSelectedOfficeId("");
     setSelectedVehicleId("");
     setVehicles([]);
     setAssignModalOpen(true);
+
+    // Load agencies for assignment
+    fetchAgencies()
+      .then((data) => {
+        setAgencies(data);
+        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+      })
+      .catch((err) => {
+        console.error("Failed to load agencies", err);
+        toast.error("Failed to load agencies");
+      });
   };
 
   const openUnassignModal = (driver: Driver) => {
@@ -172,6 +226,7 @@ const DriversTab: React.FC = () => {
 
     try {
       setAssignLoading(true);
+
       const updatedDriver = await assignVehicleToDriver(
         selectedDriver._id,
         selectedVehicleId,
@@ -186,6 +241,7 @@ const DriversTab: React.FC = () => {
 
       setAssignModalOpen(false);
       setSelectedDriver(null);
+      setSelectedAgencyId("");
       setSelectedOfficeId("");
       setSelectedVehicleId("");
       setVehicles([]);
@@ -251,6 +307,21 @@ const DriversTab: React.FC = () => {
         </div>
       ),
     },
+
+    {
+      title: "Agency",
+      key: "agency",
+      render: (_, record) => {
+        const agency = agencies.find((a) => a._id === record.agencyId);
+        return (
+          <div className="flex items-center space-x-2 text-sm text-gray-700">
+            <Building className="w-4 h-4 text-gray-400" />
+            <span>{agency?.agencyName || "Unknown Agency"}</span>
+          </div>
+        );
+      },
+    },
+
     {
       title: "Contact",
       key: "contact",
@@ -261,6 +332,7 @@ const DriversTab: React.FC = () => {
         </div>
       ),
     },
+
     {
       title: "License Number",
       dataIndex: "driverLicenseNumber",
@@ -269,6 +341,7 @@ const DriversTab: React.FC = () => {
         <span className="text-sm font-mono text-gray-700">{license}</span>
       ),
     },
+
     {
       title: "Assigned Vehicle",
       key: "assignedVehicle",
@@ -290,6 +363,7 @@ const DriversTab: React.FC = () => {
         </div>
       ),
     },
+
     {
       title: "Created",
       dataIndex: "createdAt",
@@ -301,6 +375,7 @@ const DriversTab: React.FC = () => {
         </div>
       ),
     },
+
     {
       title: "Actions",
       key: "actions",
@@ -351,9 +426,9 @@ const DriversTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Drivers</h2>
+          <h2 className="text-2xl font-bold text-gray-900">All Drivers</h2>
           <p className="text-gray-600 mt-1">
-            View your fleet drivers and their assignment details.
+            View and manage all drivers across all agencies.
           </p>
         </div>
       </div>
@@ -361,7 +436,7 @@ const DriversTab: React.FC = () => {
       {/* Drivers Table */}
       <DataTable<Driver>
         title="All Drivers"
-        description="List of all drivers registered in system."
+        description="List of all drivers registered in the system across all agencies."
         dataSource={filteredDrivers}
         columns={columns}
         loading={loading}
@@ -380,15 +455,18 @@ const DriversTab: React.FC = () => {
                 Delete Driver
               </h3>
             </div>
+
             <div className="px-6 py-5 space-y-3">
               <p className="text-sm text-gray-700">
                 Are you sure you want to delete{" "}
                 <span className="font-semibold">{driverToDelete.name}</span>?
               </p>
+
               <p className="text-xs text-gray-500">
                 This action cannot be undone.
               </p>
             </div>
+
             <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -401,6 +479,7 @@ const DriversTab: React.FC = () => {
               >
                 Cancel
               </button>
+
               <button
                 type="button"
                 className="px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -424,11 +503,40 @@ const DriversTab: React.FC = () => {
                 Assign Vehicle to {selectedDriver.name}
               </h3>
             </div>
+
             <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Select Agency
+                </label>
+
+                <select
+                  value={selectedAgencyId}
+                  onChange={(e) => setSelectedAgencyId(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#C46A0A]/60 focus:border-[#C46A0A]"
+                  disabled={officesLoading}
+                >
+                  <option value="">Select an agency</option>
+
+                  {agencies.map((agency) => (
+                    <option key={agency._id} value={agency._id}>
+                      {agency.agencyName}
+                    </option>
+                  ))}
+                </select>
+
+                {officesLoading && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Loading agencies...
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Select Office
                 </label>
+
                 <select
                   value={selectedOfficeId}
                   onChange={(e) => setSelectedOfficeId(e.target.value)}
@@ -436,12 +544,14 @@ const DriversTab: React.FC = () => {
                   disabled={officesLoading}
                 >
                   <option value="">Select an office</option>
+
                   {offices.map((office) => (
                     <option key={office._id} value={office._id}>
                       {office.officeName}
                     </option>
                   ))}
                 </select>
+
                 {officesLoading && (
                   <p className="text-xs text-gray-500 mt-1">
                     Loading offices...
@@ -453,6 +563,7 @@ const DriversTab: React.FC = () => {
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Select Vehicle
                 </label>
+
                 <select
                   value={selectedVehicleId}
                   onChange={(e) => setSelectedVehicleId(e.target.value)}
@@ -464,6 +575,7 @@ const DriversTab: React.FC = () => {
                       ? "Select a vehicle"
                       : "Select an office first"}
                   </option>
+
                   {vehicles.map((vehicle) => (
                     <option key={vehicle._id} value={vehicle._id}>
                       {vehicle.make} {vehicle.model} -{" "}
@@ -471,6 +583,7 @@ const DriversTab: React.FC = () => {
                     </option>
                   ))}
                 </select>
+
                 {vehiclesLoading && (
                   <p className="text-xs text-gray-500 mt-1">
                     Loading vehicles...
@@ -480,10 +593,17 @@ const DriversTab: React.FC = () => {
 
               {selectedDriver.assignedVehicle && (
                 <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                  Currently assigned: {selectedDriver.assignedVehicle}
+                  Currently assigned:{" "}
+                  {(selectedDriver.assignedVehicle as any).make &&
+                  (selectedDriver.assignedVehicle as any).model
+                    ? `${(selectedDriver.assignedVehicle as any).make} ${(selectedDriver.assignedVehicle as any).model} - ${(selectedDriver.assignedVehicle as any).registrationNumber}`
+                    : typeof selectedDriver.assignedVehicle === "string"
+                      ? selectedDriver.assignedVehicle
+                      : "Assigned Vehicle"}
                 </div>
               )}
             </div>
+
             <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -491,6 +611,7 @@ const DriversTab: React.FC = () => {
                 onClick={() => {
                   setAssignModalOpen(false);
                   setSelectedDriver(null);
+                  setSelectedAgencyId("");
                   setSelectedOfficeId("");
                   setSelectedVehicleId("");
                   setVehicles([]);
@@ -499,6 +620,7 @@ const DriversTab: React.FC = () => {
               >
                 Cancel
               </button>
+
               <button
                 type="button"
                 className="px-4 py-2 text-sm font-semibold rounded-md bg-[#C46A0A] text-white hover:bg-[#a85908] disabled:opacity-60 disabled:cursor-not-allowed"
@@ -522,15 +644,18 @@ const DriversTab: React.FC = () => {
                 Unassign Vehicle
               </h3>
             </div>
+
             <div className="px-6 py-5 space-y-3">
               <p className="text-sm text-gray-700">
                 Are you sure you want to unassign the vehicle from{" "}
                 <span className="font-semibold">{driverToUnassign.name}</span>?
               </p>
+
               <p className="text-xs text-gray-500">
                 This action cannot be undone.
               </p>
             </div>
+
             <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
               <button
                 type="button"
@@ -543,6 +668,7 @@ const DriversTab: React.FC = () => {
               >
                 Cancel
               </button>
+
               <button
                 type="button"
                 className="px-4 py-2 text-sm font-semibold rounded-md bg-gray-600 text-white hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -559,4 +685,4 @@ const DriversTab: React.FC = () => {
   );
 };
 
-export default DriversTab;
+export default PrincipalDriversTab;
