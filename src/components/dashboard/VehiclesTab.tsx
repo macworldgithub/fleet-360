@@ -1,20 +1,37 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
-import { officeService, Office, AgencyOption } from "@/src/api/office";
-import { vehicleService, Vehicle, VehiclePayload } from "@/src/api/vehicle";
+import {
+  vehicleService,
+  Vehicle,
+  VehiclePayload,
+  VehicleCreatePayload,
+  VehicleUpdatePayload,
+} from "@/src/api/vehicle";
 import { fetchAgencies } from "@/src/api/agencies";
-import { Button, Tag, Space, Select, Popconfirm, Dropdown } from "antd";
+import { approveVehicleRequest, rejectVehicleRequest } from "@/src/api/drivers";
+import {
+  Button,
+  Tag,
+  Space,
+  Select,
+  Popconfirm,
+  Dropdown,
+  Tooltip,
+} from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
-  PlusOutlined,
   MoreOutlined,
+  PlusOutlined,
+  CheckOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { Building, Briefcase } from "lucide-react";
+import { officeService, Office, AgencyOption } from "@/src/api/office";
 
 export default function VehiclesTab() {
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
@@ -29,10 +46,22 @@ export default function VehiclesTab() {
   const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
-  // NEW: File states for create (displayPhoto is mandatory, vehiclePhotos optional)
+  // File states
   const [displayPhoto, setDisplayPhoto] = useState<File | null>(null);
   const [vehiclePhotos, setVehiclePhotos] = useState<File[]>([]);
 
+  // Previews
+  const [displayPhotoPreview, setDisplayPhotoPreview] = useState<string | null>(
+    null,
+  );
+  const [vehiclePhotosPreviews, setVehiclePhotosPreviews] = useState<string[]>(
+    [],
+  );
+
+  // Hidden input ref for "Add more photos"
+  const addPhotosInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load agencies on mount
   useEffect(() => {
     const loadAgencies = async () => {
       try {
@@ -48,6 +77,7 @@ export default function VehiclesTab() {
     loadAgencies();
   }, []);
 
+  // Load offices when agency changes
   useEffect(() => {
     if (!selectedAgencyId) {
       setOffices([]);
@@ -73,31 +103,69 @@ export default function VehiclesTab() {
     loadOffices();
   }, [selectedAgencyId]);
 
-  useEffect(() => {
-    if (!selectedOfficeId) {
+  // Helper to load vehicles for selected office
+  const loadVehiclesForSelectedOffice = async (officeId?: string) => {
+    const id = officeId ?? selectedOfficeId;
+    if (!id) {
       setVehicles([]);
       return;
     }
-    const loadVehicles = async () => {
-      setLoading(true);
-      try {
-        const data = await vehicleService.getVehiclesByOffice(selectedOfficeId);
-        setVehicles(data);
-      } catch (err) {
-        toast.error("Failed to load vehicles for this office");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadVehicles();
+    setLoading(true);
+    try {
+      const data = await vehicleService.getVehiclesByOffice(id);
+      setVehicles(data);
+    } catch (err) {
+      toast.error("Failed to load vehicles for this office");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVehiclesForSelectedOffice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOfficeId]);
 
+  // Create object URL previews when files change; revoke old URLs on cleanup
+  useEffect(() => {
+    if (displayPhoto) {
+      const url = URL.createObjectURL(displayPhoto);
+      setDisplayPhotoPreview(url);
+      return () => {
+        URL.revokeObjectURL(url);
+        setDisplayPhotoPreview(null);
+      };
+    } else {
+      setDisplayPhotoPreview(null);
+    }
+  }, [displayPhoto]);
+
+  useEffect(() => {
+    // when vehiclePhotos changes, create previews for the current files
+    // First revoke previous previews
+    vehiclePhotosPreviews.forEach((u) => URL.revokeObjectURL(u));
+    if (vehiclePhotos.length > 0) {
+      const urls = vehiclePhotos.map((f) => URL.createObjectURL(f));
+      setVehiclePhotosPreviews(urls);
+      return () => {
+        urls.forEach((u) => URL.revokeObjectURL(u));
+        setVehiclePhotosPreviews([]);
+      };
+    } else {
+      setVehiclePhotosPreviews([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiclePhotos]);
+
   const resetForm = () => {
-    // Default to ACTIVE when creating a new vehicle
     setFormData({ vehicleStatus: "ACTIVATE" });
     setEditingVehicle(null);
     setDisplayPhoto(null);
     setVehiclePhotos([]);
+    setDisplayPhotoPreview(null);
+    setVehiclePhotosPreviews([]);
+    // clear hidden file input if present
+    if (addPhotosInputRef.current) addPhotosInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,9 +179,9 @@ export default function VehiclesTab() {
       let updatedList: Vehicle[];
 
       if (editingVehicle) {
-        // Update (JSON) – same as before
+        // Update (JSON)
         const payload: VehicleUpdatePayload = {
-          ...formData,
+          ...(formData as VehicleUpdatePayload),
           officeId: selectedOfficeId,
         };
         const updated = await vehicleService.updateVehicle(
@@ -125,14 +193,14 @@ export default function VehiclesTab() {
         );
         toast.success("Vehicle updated successfully!");
       } else {
-        // CREATE with files (multipart) – integrated with new API
+        // CREATE with files (multipart)
         if (!displayPhoto) {
           toast.error("Display photo is required");
           return;
         }
 
         const createPayload: VehicleCreatePayload = {
-          ...formData,
+          ...(formData as VehicleCreatePayload),
           officeId: selectedOfficeId,
         } as VehicleCreatePayload;
 
@@ -141,7 +209,6 @@ export default function VehiclesTab() {
           displayPhoto,
           vehiclePhotos,
         );
-
         updatedList = [created, ...vehicles];
         toast.success("Vehicle added successfully!");
       }
@@ -166,7 +233,13 @@ export default function VehiclesTab() {
 
   const openEdit = (record: Vehicle) => {
     setEditingVehicle(record);
-    setFormData(record);
+    setFormData(record as Partial<VehiclePayload>);
+    // Clear file inputs for editing (we're not auto-uploading replacements)
+    setDisplayPhoto(null);
+    setVehiclePhotos([]);
+    setDisplayPhotoPreview(null);
+    setVehiclePhotosPreviews([]);
+    if (addPhotosInputRef.current) addPhotosInputRef.current.value = "";
     setModalVisible(true);
   };
 
@@ -191,6 +264,57 @@ export default function VehiclesTab() {
     } finally {
       setStatusLoadingId(null);
     }
+  };
+
+  // Approve / Reject (use driver API functions)
+  const handleApproveRequest = async (vehicle: Vehicle) => {
+    try {
+      setStatusLoadingId(vehicle._id);
+      await approveVehicleRequest(vehicle._id);
+      toast.success("Vehicle request approved");
+      await loadVehiclesForSelectedOffice();
+    } catch (err) {
+      toast.error("Failed to approve vehicle request");
+    } finally {
+      setStatusLoadingId(null);
+    }
+  };
+
+  const handleRejectRequest = async (vehicle: Vehicle) => {
+    try {
+      setStatusLoadingId(vehicle._id);
+      await rejectVehicleRequest(vehicle._id);
+      toast.success("Vehicle request rejected");
+      await loadVehiclesForSelectedOffice();
+    } catch (err) {
+      toast.error("Failed to reject vehicle request");
+    } finally {
+      setStatusLoadingId(null);
+    }
+  };
+
+  // Append new vehicle photos (called from hidden input)
+  const handleAppendPhotos = (files: File[]) => {
+    if (!files || files.length === 0) return;
+    // append (no dedupe) — keep order
+    setVehiclePhotos((prev) => [...prev, ...files]);
+    // clear the hidden input value so the same file can be chosen again if needed
+    if (addPhotosInputRef.current) addPhotosInputRef.current.value = "";
+  };
+
+  const onAddPhotosInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    handleAppendPhotos(files);
+  };
+
+  // Remove a selected vehicle photo (before upload)
+  const removeVehiclePhotoAt = (index: number) => {
+    setVehiclePhotos((prev) => {
+      const copy = [...prev];
+      copy.splice(index, 1);
+      return copy;
+    });
+    // previews will be recalculated by the effect watching vehiclePhotos
   };
 
   const columns: ColumnsType<Vehicle> = [
@@ -258,13 +382,13 @@ export default function VehiclesTab() {
       title: "Actions",
       key: "actions",
       align: "center",
-      width: 160,
+      width: 220,
       fixed: "right",
       render: (_, record) => {
         const menuItems = [
           {
             key: "activate",
-            label: "Active",
+            label: "Activate",
             disabled:
               statusLoadingId === record._id ||
               record.vehicleStatus === "ACTIVATE",
@@ -272,22 +396,22 @@ export default function VehiclesTab() {
           },
           {
             key: "deactivate",
-            label: "Inactive",
+            label: "Deactivate",
             disabled:
               statusLoadingId === record._id ||
               record.vehicleStatus === "DEACTIVATE",
             onClick: () => handleToggleStatus(record, "DEACTIVATE"),
           },
         ];
+
         return (
-          <Space size="middle">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <Button
               type="link"
               icon={<EditOutlined />}
               onClick={() => openEdit(record)}
-            >
-              Edit
-            </Button>
+              size="small"
+            />
             <Popconfirm
               title="Delete Vehicle"
               description="Are you sure? This cannot be undone."
@@ -296,10 +420,57 @@ export default function VehiclesTab() {
               cancelText="No"
               okButtonProps={{ danger: true }}
             >
-              <Button type="link" danger icon={<DeleteOutlined />}>
-                Delete
-              </Button>
+              <Button
+                type="link"
+                icon={<DeleteOutlined />}
+                size="small"
+                danger
+              />
             </Popconfirm>
+
+            {/* Compact Approve / Disapprove icon buttons (only for UNDER_AGREEMENT) */}
+            {record.vehicleStatus === "UNDER_AGREEMENT" && (
+              <Space size="small">
+                <Tooltip title="Approve">
+                  <Popconfirm
+                    title="Approve vehicle request?"
+                    description="This will approve the vehicle request."
+                    onConfirm={() => handleApproveRequest(record)}
+                    okText="Approve"
+                    cancelText="Cancel"
+                  >
+                    <Button
+                      type="primary"
+                      shape="circle"
+                      icon={<CheckOutlined />}
+                      size="small"
+                      loading={statusLoadingId === record._id}
+                      aria-label="Approve"
+                    />
+                  </Popconfirm>
+                </Tooltip>
+
+                <Tooltip title="Disapprove">
+                  <Popconfirm
+                    title="Reject vehicle request?"
+                    description="This will reject the vehicle request."
+                    onConfirm={() => handleRejectRequest(record)}
+                    okText="Reject"
+                    cancelText="Cancel"
+                  >
+                    <Button
+                      danger
+                      shape="circle"
+                      icon={<CloseOutlined />}
+                      size="small"
+                      loading={statusLoadingId === record._id}
+                      aria-label="Disapprove"
+                    />
+                  </Popconfirm>
+                </Tooltip>
+              </Space>
+            )}
+
             <Dropdown
               menu={{ items: menuItems }}
               trigger={["click"]}
@@ -308,10 +479,11 @@ export default function VehiclesTab() {
               <Button
                 type="text"
                 icon={<MoreOutlined />}
+                size="small"
                 loading={statusLoadingId === record._id}
               />
             </Dropdown>
-          </Space>
+          </div>
         );
       },
     },
@@ -465,7 +637,7 @@ export default function VehiclesTab() {
         submitLoading={loading}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Existing fields (unchanged) */}
+          {/* VIN */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               VIN <span className="text-red-500">*</span>
@@ -481,6 +653,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Registration */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Registration Number
@@ -495,6 +668,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Make */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Make <span className="text-red-500">*</span>
@@ -510,6 +684,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Model */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Model <span className="text-red-500">*</span>
@@ -525,6 +700,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Year */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Year <span className="text-red-500">*</span>
@@ -541,6 +717,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Color */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Color
@@ -555,6 +732,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Fuel Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Type <span className="text-red-500">*</span>
@@ -575,6 +753,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
+          {/* Odometer */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Odometer (km)
@@ -593,6 +772,7 @@ export default function VehiclesTab() {
             />
           </div>
 
+          {/* Lease Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Ownership / Financing Type <span className="text-red-500">*</span>
@@ -611,7 +791,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* UPDATED: Vehicle Status dropdown now shows ALL backend statuses, defaults to ACTIVE for new vehicles */}
+          {/* Vehicle Status */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Vehicle Status <span className="text-red-500">*</span>
@@ -633,7 +813,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* NEW: File upload fields for createVehicle API (displayPhoto required, vehiclePhotos optional) */}
+          {/* Display Photo (single, required) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Display Photo <span className="text-red-500">*</span>
@@ -644,31 +824,125 @@ export default function VehiclesTab() {
               onChange={(e) => setDisplayPhoto(e.target.files?.[0] || null)}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
             />
-            {displayPhoto && (
-              <p className="mt-1 text-xs text-green-600">
-                Selected: {displayPhoto.name}
-              </p>
+            {displayPhotoPreview && (
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={displayPhotoPreview}
+                  alt="display preview"
+                  className="w-28 h-20 object-cover rounded-md border"
+                />
+                <div className="text-xs text-gray-600">
+                  <div className="font-medium">{displayPhoto?.name}</div>
+                  <div className="text-gray-500">
+                    New selection — will replace current display photo on submit
+                  </div>
+                </div>
+              </div>
             )}
+
+            {/* If editing and no newly selected file, show existing image if available */}
+            {!displayPhotoPreview &&
+              editingVehicle &&
+              (editingVehicle as any).displayPhotoUrl && (
+                <div className="mt-2 flex items-center gap-3">
+                  <img
+                    src={(editingVehicle as any).displayPhotoUrl}
+                    alt="current display"
+                    className="w-28 h-20 object-cover rounded-md border"
+                  />
+                  <div className="text-xs text-gray-600">
+                    <div className="font-medium">Current display photo</div>
+                  </div>
+                </div>
+              )}
           </div>
 
+          {/* Additional photos (multiple) — append mode with + Add button */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Additional Vehicle Photos (optional – multiple)
+              Additional Vehicle Photos (optional)
             </label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) =>
-                setVehiclePhotos(Array.from(e.target.files || []))
-              }
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-            />
-            {vehiclePhotos.length > 0 && (
-              <p className="mt-1 text-xs text-green-600">
-                Selected {vehiclePhotos.length} photo(s)
-              </p>
-            )}
+
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <input
+                ref={addPhotosInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={onAddPhotosInputChange}
+                className="hidden"
+              />
+              <Button
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={() => addPhotosInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
+                Add photos
+              </Button>
+
+              {vehiclePhotos.length > 0 && (
+                <div className="text-sm text-gray-600">
+                  {vehiclePhotos.length} selected
+                </div>
+              )}
+
+              {/* If editing and no new photos selected, optionally indicate existing */}
+              {vehiclePhotos.length === 0 &&
+                editingVehicle &&
+                (editingVehicle as any).vehiclePhotosUrls?.length > 0 && (
+                  <div className="text-sm text-gray-600">
+                    {(editingVehicle as any).vehiclePhotosUrls.length} existing
+                    photo(s)
+                  </div>
+                )}
+            </div>
+
+            {/* Previews grid */}
+            <div className="flex gap-2 flex-wrap">
+              {vehiclePhotosPreviews.map((p, i) => (
+                <div
+                  key={i}
+                  className="relative w-28 h-20 rounded-md overflow-hidden border"
+                >
+                  <img
+                    src={p}
+                    alt={`photo-${i}`}
+                    className="object-cover w-full h-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeVehiclePhotoAt(i)}
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-xs shadow"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              {/* Show existing photos (if editing and no new photos chosen) */}
+              {vehiclePhotosPreviews.length === 0 &&
+                editingVehicle &&
+                (editingVehicle as any).vehiclePhotosUrls?.length > 0 &&
+                (editingVehicle as any).vehiclePhotosUrls.map(
+                  (url: string, idx: number) => (
+                    <div
+                      key={`existing-${idx}`}
+                      className="relative w-28 h-20 rounded-md overflow-hidden border"
+                    >
+                      <img
+                        src={url}
+                        alt={`existing-${idx}`}
+                        className="object-cover w-full h-full"
+                      />
+                      <div className="absolute top-1 right-1 text-xs bg-white/80 px-1 rounded">
+                        current
+                      </div>
+                    </div>
+                  ),
+                )}
+            </div>
           </div>
         </div>
       </FormModal>
