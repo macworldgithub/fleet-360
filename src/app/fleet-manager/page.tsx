@@ -23,14 +23,15 @@ import DriversTab from "@/src/components/dashboard/DriversTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
 import IncidentsTab from "@/src/components/dashboard/incidents";
 import KMLogsTab from "@/src/components/dashboard/KMLogsTab";
+import StatsTab from "@/src/components/dashboard/StatsTab";
 
-type TabType = "offices" | "vehicles" | "drivers" | "maintenance" | "incidents" | "km-logs";
+type TabType = "stats" | "offices" | "vehicles" | "drivers" | "maintenance" | "incidents" | "km-logs";
 
 const FleetManagerDashboard: React.FC = () => {
   const router = useRouter();
 
   const { agency, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("offices");
+  const [activeTab, setActiveTab] = useState<TabType>("stats");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
@@ -39,6 +40,7 @@ const FleetManagerDashboard: React.FC = () => {
   };
 
   const menuItems = [
+    { id: "stats", label: "Stats", icon: TrendingUp },
     { id: "offices", label: "Offices", icon: MapPin },
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "drivers", label: "Drivers", icon: Users },
@@ -49,6 +51,8 @@ const FleetManagerDashboard: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "stats":
+        return <StatsTab />;
       case "offices":
         return <OfficesTab />;
       case "vehicles":
@@ -62,7 +66,7 @@ const FleetManagerDashboard: React.FC = () => {
       case "km-logs":
         return <KMLogsTab />;
       default:
-        return <OfficesTab />;
+        return <StatsTab />;
     }
   };
 

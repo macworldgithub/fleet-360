@@ -25,8 +25,10 @@ import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule"
 import IncidentsTab from "@/src/components/dashboard/incidents";
 import PrincipalDriversTab from "@/src/components/dashboard/PrincipalDriversTab";
 import KMLogsTab from "@/src/components/dashboard/KMLogsTab";
+import StatsTab from "@/src/components/dashboard/StatsTab";
 
 type TabType =
+  | "stats"
   | "agency"
   | "vehicles"
   | "drivers"
@@ -38,7 +40,7 @@ type TabType =
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
   const { agency, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("agency");
+  const [activeTab, setActiveTab] = useState<TabType>("stats");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
@@ -47,6 +49,7 @@ const PrincipalDashboard: React.FC = () => {
   };
 
   const menuItems = [
+    { id: "stats", label: "Stats", icon: TrendingUp },
     { id: "agency", label: "Agency", icon: Building2 },
     { id: "vehicles", label: "Vehicles", icon: Car },
     { id: "drivers", label: "Drivers", icon: Users },
@@ -58,6 +61,8 @@ const PrincipalDashboard: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "stats":
+        return <StatsTab />;
       case "agency":
         return <AgencyTab agency={agency} />;
       case "vehicles":
@@ -73,7 +78,7 @@ const PrincipalDashboard: React.FC = () => {
       case "km-logs":
         return <KMLogsTab />;
       default:
-        return <AgencyTab agency={agency} />;
+        return <StatsTab />;
     }
   };
 
