@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Wrench,
   Settings,
+  FileText,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -21,8 +22,9 @@ import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import DriversTab from "@/src/components/dashboard/DriversTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
 import IncidentsTab from "@/src/components/dashboard/incidents";
+import KMLogsTab from "@/src/components/dashboard/KMLogsTab";
 
-type TabType = "offices" | "vehicles" | "drivers" | "maintenance" | "incidents";
+type TabType = "offices" | "vehicles" | "drivers" | "maintenance" | "incidents" | "km-logs";
 
 const FleetManagerDashboard: React.FC = () => {
   const router = useRouter();
@@ -42,6 +44,7 @@ const FleetManagerDashboard: React.FC = () => {
     { id: "drivers", label: "Drivers", icon: Users },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "incidents", label: "Incidents", icon: Settings },
+    { id: "km-logs", label: "KM Logs", icon: FileText },
   ];
 
   const renderTabContent = () => {
@@ -56,6 +59,8 @@ const FleetManagerDashboard: React.FC = () => {
         return <MaintenanceSchedule />;
       case "incidents":
         return <IncidentsTab />;
+      case "km-logs":
+        return <KMLogsTab />;
       default:
         return <OfficesTab />;
     }
@@ -124,11 +129,10 @@ const FleetManagerDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeTab === item.id
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>

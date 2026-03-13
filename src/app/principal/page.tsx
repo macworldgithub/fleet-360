@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Wrench,
   Users,
+  FileText,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
@@ -23,6 +24,7 @@ import OfficesTab from "@/src/components/dashboard/OfficesTab";
 import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
 import IncidentsTab from "@/src/components/dashboard/incidents";
 import PrincipalDriversTab from "@/src/components/dashboard/PrincipalDriversTab";
+import KMLogsTab from "@/src/components/dashboard/KMLogsTab";
 
 type TabType =
   | "agency"
@@ -30,7 +32,8 @@ type TabType =
   | "drivers"
   | "offices"
   | "maintenance"
-  | "incidents";
+  | "incidents"
+  | "km-logs";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
@@ -50,6 +53,7 @@ const PrincipalDashboard: React.FC = () => {
     { id: "offices", label: "Offices", icon: MapPin },
     { id: "maintenance", label: "Maintenance", icon: Wrench },
     { id: "incidents", label: "Incidents", icon: Settings },
+    { id: "km-logs", label: "KM Logs", icon: FileText },
   ];
 
   const renderTabContent = () => {
@@ -66,6 +70,8 @@ const PrincipalDashboard: React.FC = () => {
         return <MaintenanceSchedule />;
       case "incidents":
         return <IncidentsTab />;
+      case "km-logs":
+        return <KMLogsTab />;
       default:
         return <AgencyTab agency={agency} />;
     }
