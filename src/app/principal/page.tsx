@@ -145,11 +145,10 @@ const PrincipalDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeTab === item.id
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
