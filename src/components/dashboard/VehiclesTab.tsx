@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
 import { VehicleLogbookModal } from "@/src/components/dashboard/VehicleLogbookModal";
+import { CostIntelligenceModal } from "@/src/components/dashboard/CostIntelligenceModal";
 import { officeService, Office, AgencyOption } from "@/src/api/office";
 import { vehicleService, Vehicle, VehiclePayload } from "@/src/api/vehicle";
 import { fetchAgencies } from "@/src/api/agencies";
@@ -32,6 +33,8 @@ export default function VehiclesTab() {
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
   const [logbookModalVisible, setLogbookModalVisible] = useState(false);
   const [selectedLogbookVehicle, setSelectedLogbookVehicle] = useState<Vehicle | null>(null);
+  const [costModalVisible, setCostModalVisible] = useState(false);
+  const [selectedCostVehicle, setSelectedCostVehicle] = useState<Vehicle | null>(null);
 
 
   useEffect(() => {
@@ -255,6 +258,14 @@ export default function VehiclesTab() {
             onClick: () => {
               setSelectedLogbookVehicle(record);
               setLogbookModalVisible(true);
+            },
+          },
+          {
+            key: "cost-intelligence",
+            label: "Cost Intelligence",
+            onClick: () => {
+              setSelectedCostVehicle(record);
+              setCostModalVisible(true);
             },
           },
           {
@@ -653,6 +664,16 @@ export default function VehiclesTab() {
         vehicleId={selectedLogbookVehicle?._id || null}
         agencyId={selectedAgencyId || null}
         vehicleName={selectedLogbookVehicle ? `${selectedLogbookVehicle.make} ${selectedLogbookVehicle.model} (${selectedLogbookVehicle.registrationNumber})` : "Vehicle"}
+      />
+
+      <CostIntelligenceModal
+        isOpen={costModalVisible}
+        onClose={() => {
+          setCostModalVisible(false);
+          setSelectedCostVehicle(null);
+        }}
+        vehicleId={selectedCostVehicle?._id || null}
+        vehicleName={selectedCostVehicle ? `${selectedCostVehicle.make} ${selectedCostVehicle.model} (${selectedCostVehicle.registrationNumber})` : "Vehicle"}
       />
     </div>
   );
