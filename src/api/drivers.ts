@@ -18,6 +18,12 @@ export async function fetchDrivers(): Promise<Driver[]> {
   return res.data;
 }
 
+// New function for principals to fetch all drivers across agencies
+export async function fetchAllDrivers(): Promise<Driver[]> {
+  const res = await apiClient.get<Driver[]>("/drivers");
+  return res.data;
+}
+
 export async function deleteDriver(driverId: string): Promise<void> {
   await apiClient.delete(`/drivers/${driverId}`);
 }
@@ -30,4 +36,22 @@ export async function assignVehicleToDriver(
     `/drivers/${driverId}/assign-vehicle/${vehicleId}`,
   );
   return res.data;
+}
+
+export async function unassignVehicleFromDriver(
+  driverId: string,
+  vehicleId: string,
+): Promise<Driver> {
+  const res = await apiClient.post(
+    `/drivers/${driverId}/unassign-vehicle/${vehicleId}`,
+  );
+  return res.data;
+}
+
+export async function approveVehicleRequest(vehicleId: string): Promise<void> {
+  await apiClient.patch(`/drivers/approve-vehicle/${vehicleId}`);
+}
+
+export async function rejectVehicleRequest(vehicleId: string): Promise<void> {
+  await apiClient.patch(`/drivers/reject-vehicle/${vehicleId}`);
 }

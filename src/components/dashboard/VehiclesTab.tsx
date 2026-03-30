@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { DataTable } from "@/src/components/dashboard/DataTable";
 import { FormModal } from "@/src/components/dashboard/FormModal";
+import { VehicleLogbookModal } from "@/src/components/dashboard/VehicleLogbookModal";
 import { officeService, Office, AgencyOption } from "@/src/api/office";
 import { vehicleService, Vehicle, VehiclePayload } from "@/src/api/vehicle";
 import { fetchAgencies } from "@/src/api/agencies";
@@ -29,8 +30,10 @@ export default function VehiclesTab() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [formData, setFormData] = useState<Partial<VehiclePayload>>({});
   const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
+  const [logbookModalVisible, setLogbookModalVisible] = useState(false);
+  const [selectedLogbookVehicle, setSelectedLogbookVehicle] = useState<Vehicle | null>(null);
 
-  // Load agencies on mount
+
   useEffect(() => {
     const loadAgencies = async () => {
       try {
@@ -46,7 +49,7 @@ export default function VehiclesTab() {
     loadAgencies();
   }, []);
 
-  // Load offices when agency changes
+
   useEffect(() => {
     if (!selectedAgencyId) {
       setOffices([]);
@@ -73,7 +76,7 @@ export default function VehiclesTab() {
     loadOffices();
   }, [selectedAgencyId]);
 
-  // Load vehicles when office changes
+
   useEffect(() => {
     if (!selectedOfficeId) {
       setVehicles([]);
@@ -154,7 +157,10 @@ export default function VehiclesTab() {
     setModalVisible(true);
   };
 
-  const handleToggleStatus = async (vehicle: Vehicle, target: "ACTIVATE" | "DEACTIVATE") => {
+  const handleToggleStatus = async (
+    vehicle: Vehicle,
+    target: "ACTIVATE" | "DEACTIVATE",
+  ) => {
     if (vehicle.vehicleStatus === target) {
       return;
     }
@@ -244,6 +250,14 @@ export default function VehiclesTab() {
       render: (_, record) => {
         const menuItems = [
           {
+            key: "logbooks",
+            label: "ATO Logbooks",
+            onClick: () => {
+              setSelectedLogbookVehicle(record);
+              setLogbookModalVisible(true);
+            },
+          },
+          {
             key: "activate",
             label: "Active",
             disabled:
@@ -311,10 +325,10 @@ export default function VehiclesTab() {
         </p>
       </div>
 
-      {/* Selectors Card */}
+
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Agency Selector */}
+
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Briefcase size={18} className="text-amber-600" />
@@ -327,13 +341,14 @@ export default function VehiclesTab() {
               onChange={setSelectedAgencyId}
               className="w-full"
               filterOption={(input, option) =>
-                (option?.label ?? "")
+                ((option as any)?.agencyName || "")
                   .toLowerCase()
                   .includes(input.toLowerCase())
               }
               optionLabelProp="label"
               options={agencies.map((a) => ({
                 value: a._id,
+                agencyName: a.agencyName,
                 label: (
                   <div className="flex items-center gap-2">
                     <Briefcase size={16} className="text-amber-600" />
@@ -342,14 +357,14 @@ export default function VehiclesTab() {
                 ),
               }))}
               size="large"
-              status={selectedAgencyId ? "success" : "default"}
+              status={selectedAgencyId ? "success" : undefined}
               style={{
                 borderRadius: "0.875rem",
               }}
             />
           </div>
 
-          {/* Office Selector */}
+
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Building size={18} className="text-blue-600" />
@@ -369,14 +384,15 @@ export default function VehiclesTab() {
               disabled={!selectedAgencyId || officesLoading}
               loading={officesLoading}
               className="w-full"
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
+              filterOption={(input, option) => {
+                const searchStr = `${(option as any)?.officeName || ""} ${(option as any)?.city || ""}`.toLowerCase();
+                return searchStr.includes(input.toLowerCase());
+              }}
               optionLabelProp="label"
               options={offices.map((o) => ({
                 value: o._id,
+                officeName: o.officeName,
+                city: o.city,
                 label: (
                   <div className="flex items-center gap-2">
                     <Building size={16} className="text-blue-600" />
@@ -390,7 +406,7 @@ export default function VehiclesTab() {
                 ),
               }))}
               size="large"
-              status={selectedOfficeId ? "success" : "default"}
+              status={selectedOfficeId ? "success" : undefined}
               style={{
                 borderRadius: "0.875rem",
               }}
@@ -438,7 +454,7 @@ export default function VehiclesTab() {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+
       <FormModal
         title={editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
         isOpen={modalVisible}
@@ -451,7 +467,7 @@ export default function VehiclesTab() {
         submitLoading={loading}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* VIN */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               VIN <span className="text-red-500">*</span>
@@ -467,7 +483,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Registration Number */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Registration Number
@@ -498,7 +514,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Model */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Model <span className="text-red-500">*</span>
@@ -514,7 +530,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Year */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Year <span className="text-red-500">*</span>
@@ -531,7 +547,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Color */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Color
@@ -546,7 +562,7 @@ export default function VehiclesTab() {
             />
           </div>
 
-          {/* Fuel Type */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Fuel Type <span className="text-red-500">*</span>
@@ -555,7 +571,7 @@ export default function VehiclesTab() {
               required
               value={formData.fuelType || ""}
               onChange={(e) =>
-                setFormData({ ...formData, fuelType: e.target.value })
+                setFormData({ ...formData, fuelType: e.target.value as VehiclePayload["fuelType"] })
               }
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 bg-white"
             >
@@ -567,7 +583,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Odometer */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Odometer (km)
@@ -604,7 +620,7 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Status */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Vehicle Status <span className="text-red-500">*</span>
@@ -624,9 +640,20 @@ export default function VehiclesTab() {
             </select>
           </div>
 
-          {/* Add more fields like purchaseDate, cost, leaseType, loan details etc. as needed */}
+
         </div>
       </FormModal>
+
+      <VehicleLogbookModal
+        isOpen={logbookModalVisible}
+        onClose={() => {
+          setLogbookModalVisible(false);
+          setSelectedLogbookVehicle(null);
+        }}
+        vehicleId={selectedLogbookVehicle?._id || null}
+        agencyId={selectedAgencyId || null}
+        vehicleName={selectedLogbookVehicle ? `${selectedLogbookVehicle.make} ${selectedLogbookVehicle.model} (${selectedLogbookVehicle.registrationNumber})` : "Vehicle"}
+      />
     </div>
   );
 }

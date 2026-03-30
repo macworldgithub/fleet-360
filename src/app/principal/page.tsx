@@ -1,30 +1,46 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Building2, 
-  Car, 
-  MapPin, 
-  Menu, 
-  X, 
+import {
+  Building2,
+  Car,
+  MapPin,
+  Menu,
+  X,
   Home,
   Settings,
   LogOut,
   User,
-  TrendingUp
+  TrendingUp,
+  Wrench,
+  Users,
+  FileText,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/api/auth";
 import AgencyTab from "@/src/components/dashboard/AgencyTab";
 import VehiclesTab from "@/src/components/dashboard/VehiclesTab";
 import OfficesTab from "@/src/components/dashboard/OfficesTab";
+import MaintenanceSchedule from "@/src/components/dashboard/MaintenanceSchedule";
+import IncidentsTab from "@/src/components/dashboard/incidents";
+import PrincipalDriversTab from "@/src/components/dashboard/PrincipalDriversTab";
+import KMLogsTab from "@/src/components/dashboard/KMLogsTab";
+import StatsTab from "@/src/components/dashboard/StatsTab";
 
-type TabType = "agency" | "vehicles" | "offices";
+type TabType =
+  | "stats"
+  | "agency"
+  | "vehicles"
+  | "drivers"
+  | "offices"
+  | "maintenance"
+  | "incidents"
+  | "km-logs";
 
 const PrincipalDashboard: React.FC = () => {
   const router = useRouter();
   const { agency, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>("agency");
+  const [activeTab, setActiveTab] = useState<TabType>("stats");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
@@ -33,21 +49,36 @@ const PrincipalDashboard: React.FC = () => {
   };
 
   const menuItems = [
+    { id: "stats", label: "Stats", icon: TrendingUp },
     { id: "agency", label: "Agency", icon: Building2 },
     { id: "vehicles", label: "Vehicles", icon: Car },
+    { id: "drivers", label: "Drivers", icon: Users },
     { id: "offices", label: "Offices", icon: MapPin },
+    { id: "maintenance", label: "Maintenance", icon: Wrench },
+    { id: "incidents", label: "Incidents", icon: Settings },
+    { id: "km-logs", label: "KM Logs", icon: FileText },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "stats":
+        return <StatsTab />;
       case "agency":
         return <AgencyTab agency={agency} />;
       case "vehicles":
         return <VehiclesTab />;
+      case "drivers":
+        return <PrincipalDriversTab />;
       case "offices":
         return <OfficesTab />;
+      case "maintenance":
+        return <MaintenanceSchedule />;
+      case "incidents":
+        return <IncidentsTab />;
+      case "km-logs":
+        return <KMLogsTab />;
       default:
-        return <AgencyTab agency={agency} />;
+        return <StatsTab />;
     }
   };
 
@@ -62,19 +93,25 @@ const PrincipalDashboard: React.FC = () => {
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
               >
-                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {sidebarOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
               </button>
               <div className="ml-4 flex items-center">
                 <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold px-3 py-2 text-sm rounded-lg shadow-lg">
                   AG
                 </div>
                 <div className="ml-3">
-                  <h1 className="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Principal Dashboard
+                  </h1>
                   <p className="text-sm text-gray-500">{agency?.agencyName}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
@@ -98,7 +135,9 @@ const PrincipalDashboard: React.FC = () => {
 
       <div className="flex min-h-[calc(100vh-6rem)]">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}>
+        <aside
+          className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-white border-r border-gray-200 shadow-sm overflow-hidden`}
+        >
           <nav className="p-4 space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -106,18 +145,17 @@ const PrincipalDashboard: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${activeTab === item.id
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
                 </button>
               );
             })}
-            
+
             <div className="pt-4 mt-4 border-t border-gray-200">
               <button
                 onClick={() => router.push("/")}
@@ -132,9 +170,7 @@ const PrincipalDashboard: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            {renderTabContent()}
-          </div>
+          <div className="max-w-7xl mx-auto">{renderTabContent()}</div>
         </main>
       </div>
     </div>

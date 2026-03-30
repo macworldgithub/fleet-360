@@ -21,6 +21,8 @@ import {
   deleteDriver,
   assignVehicleToDriver,
   unassignVehicleFromDriver,
+  approveVehicleRequest,
+  rejectVehicleRequest,
   type Driver,
 } from "@/src/api/drivers";
 
@@ -40,7 +42,7 @@ const DriversTab: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [driverToDelete, setDriverToDelete] = useState<Driver | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
+  
   // Assignment states
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -206,10 +208,9 @@ const DriversTab: React.FC = () => {
       setUnassignLoading(true);
 
       // Extract vehicle ID from assignedVehicle (it could be string or object)
-      const vehicleId =
-        typeof driverToUnassign.assignedVehicle === "string"
-          ? driverToUnassign.assignedVehicle
-          : (driverToUnassign.assignedVehicle as any)._id;
+      const vehicleId = typeof driverToUnassign.assignedVehicle === 'string' 
+        ? driverToUnassign.assignedVehicle 
+        : (driverToUnassign.assignedVehicle as any)._id;
 
       const updatedDriver = await unassignVehicleFromDriver(
         driverToUnassign._id,
@@ -232,6 +233,32 @@ const DriversTab: React.FC = () => {
       toast.error("Failed to unassign vehicle. Please try again.");
     } finally {
       setUnassignLoading(false);
+    }
+  };
+
+  const handleApproveVehicle = async (vehicleId: string) => {
+    try {
+      await approveVehicleRequest(vehicleId);
+      toast.success("Vehicle request approved successfully!");
+      // Refresh drivers list to show updated status
+      const data = await fetchDrivers();
+      setDrivers(data);
+    } catch (err) {
+      console.error("Failed to approve vehicle request", err);
+      toast.error("Failed to approve vehicle request. Please try again.");
+    }
+  };
+
+  const handleRejectVehicle = async (vehicleId: string) => {
+    try {
+      await rejectVehicleRequest(vehicleId);
+      toast.success("Vehicle request rejected successfully!");
+      // Refresh drivers list to show updated status
+      const data = await fetchDrivers();
+      setDrivers(data);
+    } catch (err) {
+      console.error("Failed to reject vehicle request", err);
+      toast.error("Failed to reject vehicle request. Please try again.");
     }
   };
 
@@ -322,6 +349,26 @@ const DriversTab: React.FC = () => {
               <Car className="w-4 h-4" />
               <span>Assign</span>
             </button>
+          )}
+          
+          {/* Approve/Reject buttons for vehicle requests */}
+          {(record.assignedVehicle as any)?._id && (
+            <>
+              <button
+                onClick={() => handleApproveVehicle((record.assignedVehicle as any)._id)}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+              >
+                <span>✓</span>
+                <span>Approve</span>
+              </button>
+              <button
+                onClick={() => handleRejectVehicle((record.assignedVehicle as any)._id)}
+                className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+              >
+                <span>✗</span>
+                <span>Reject</span>
+              </button>
+            </>
           )}
 
           <button
@@ -443,9 +490,7 @@ const DriversTab: React.FC = () => {
                   ))}
                 </select>
                 {officesLoading && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Loading offices...
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Loading offices...</p>
                 )}
               </div>
 
@@ -460,21 +505,16 @@ const DriversTab: React.FC = () => {
                   disabled={!selectedOfficeId || vehiclesLoading}
                 >
                   <option value="">
-                    {selectedOfficeId
-                      ? "Select a vehicle"
-                      : "Select an office first"}
+                    {selectedOfficeId ? "Select a vehicle" : "Select an office first"}
                   </option>
                   {vehicles.map((vehicle) => (
                     <option key={vehicle._id} value={vehicle._id}>
-                      {vehicle.make} {vehicle.model} -{" "}
-                      {vehicle.registrationNumber}
+                      {vehicle.make} {vehicle.model} - {vehicle.registrationNumber}
                     </option>
                   ))}
                 </select>
                 {vehiclesLoading && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Loading vehicles...
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Loading vehicles...</p>
                 )}
               </div>
 

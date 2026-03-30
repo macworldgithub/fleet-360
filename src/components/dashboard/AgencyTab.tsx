@@ -293,7 +293,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
           <div className="p-6 text-sm text-gray-600">Loading agencies...</div>
         ) : (
           <div className="p-6 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm min-w-[800px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-xs">

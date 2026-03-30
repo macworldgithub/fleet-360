@@ -75,22 +75,25 @@ export function DataTable<T extends { key?: string | number; _id?: string }>({
       )}
 
       {/* Table */}
-      <Table
-        columns={columns}
-        rowClassName={() => "agency-table-row"}
-        dataSource={dataSource.map((item) => ({
-          ...item,
-          key: item._id || item.key,
-        }))}
-        loading={{
-          spinning: loading,
-          indicator: <LoadingOutlined spin style={{ fontSize: 24 }} />,
-        }}
-        locale={{ emptyText }}
-        pagination={dataSource.length > 10 ? { pageSize: 10 } : false}
-        className="agency-table"
-        {...tableProps}
-      />
+      <div className="overflow-x-auto">
+        <Table
+          columns={columns}
+          rowClassName={() => "agency-table-row"}
+          dataSource={dataSource.map((item) => ({
+            ...item,
+            key: item._id || item.key,
+          }))}
+          loading={{
+            spinning: loading,
+            indicator: <LoadingOutlined spin style={{ fontSize: 24 }} />,
+          }}
+          locale={{ emptyText }}
+          pagination={dataSource.length > 10 ? { pageSize: 10 } : false}
+          className="agency-table min-w-[800px]"
+          scroll={{ x: "max-content" }}
+          {...tableProps}
+        />
+      </div>
     </div>
   );
 }
