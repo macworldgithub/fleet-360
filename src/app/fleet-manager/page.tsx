@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Car,
   MapPin,
@@ -32,7 +32,23 @@ const FleetManagerDashboard: React.FC = () => {
 
   const { agency, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("stats");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -92,29 +108,31 @@ const FleetManagerDashboard: React.FC = () => {
                   FM
                 </div>
                 <div className="ml-3">
-                  <h1 className="text-xl font-bold text-gray-900">
+                  <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
                     Fleet Manager Dashboard
                   </h1>
-                  <p className="text-sm text-gray-500">{agency?.agencyName}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
+                    {agency?.agencyName}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
-                <span>{agency?.contactEmail}</span>
+                <span className="truncate max-w-[150px]">{agency?.contactEmail}</span>
               </div>
-              <div className="flex items-center space-x-2 text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+              <div className="hidden sm:flex items-center space-x-2 text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
                 <TrendingUp className="w-3 h-3" />
                 <span>FLEET MANAGER</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-md transition-colors"
+                className="flex items-center space-x-1 sm:space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-2 sm:px-3 py-2 rounded-md transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="text-sm font-medium">Logout</span>
+                <span className="text-xs sm:text-sm font-medium">Logout</span>
               </button>
             </div>
           </div>
@@ -157,7 +175,7 @@ const FleetManagerDashboard: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 min-w-0">
           <div className="max-w-7xl mx-auto">{renderTabContent()}</div>
         </main>
       </div>

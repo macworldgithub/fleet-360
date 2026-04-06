@@ -264,7 +264,7 @@ const AgencyTab: React.FC<AgencyTabProps> = ({ agency }) => {
       </div>
       {/* Agencies Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
               All Agencies

@@ -241,7 +241,6 @@ export default function IncidentsTab() {
       key: "actions",
       align: "center",
       width: 140,
-      fixed: "right",
       render: (_, record) => (
         <Space size="middle">
           <Button

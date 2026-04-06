@@ -188,7 +188,6 @@ export default function VehiclesTab() {
       title: "VIN",
       dataIndex: "vin",
       key: "vin",
-      fixed: "left",
       render: (text) => <span className="font-mono">{text}</span>,
     },
     {
@@ -249,7 +248,6 @@ export default function VehiclesTab() {
       key: "actions",
       align: "center",
       width: 160,
-      fixed: "right",
       render: (_, record) => {
         const menuItems = [
           {
