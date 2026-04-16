@@ -34,8 +34,10 @@ import { Building, Briefcase } from "lucide-react";
 import { officeService, Office, AgencyOption } from "@/src/api/office";
 import { VehicleLogbookModal } from "./VehicleLogbookModal";
 import { CostIntelligenceModal } from "./CostIntelligenceModal";
+import { useAuth } from "@/src/api/auth";
 
 export default function VehiclesTab() {
+  const { agency } = useAuth();
   const [agencies, setAgencies] = useState<AgencyOption[]>([]);
   const [selectedAgencyId, setSelectedAgencyId] = useState<string>("");
   const [offices, setOffices] = useState<Office[]>([]);
@@ -69,21 +71,45 @@ export default function VehiclesTab() {
   // Hidden input ref for "Add more photos"
   const addPhotosInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load agencies on mount
+  // Load data based on user role
   useEffect(() => {
-    const loadAgencies = async () => {
+    const loadData = async () => {
       try {
-        const data = await fetchAgencies();
-        setAgencies(
-          data.map((a) => ({ _id: a._id, agencyName: a.agencyName })),
-        );
-        if (data.length > 0) setSelectedAgencyId(data[0]._id);
+        // Get agency data directly from localStorage to ensure correct ID
+        let agencyData = agency;
+        if (typeof window !== "undefined") {
+          const localStorageAgency = localStorage.getItem("agency");
+          if (localStorageAgency) {
+            try {
+              agencyData = JSON.parse(localStorageAgency);
+              console.log("Using agency from localStorage:", agencyData);
+            } catch (e) {
+              console.error("Failed to parse localStorage agency:", e);
+            }
+          }
+        }
+
+        if (agencyData?.role === "FLEET_MANAGER") {
+          // Fleet Manager: Use their own agency
+          console.log("Fleet Manager detected, agency ID:", agencyData.id);
+          setSelectedAgencyId(agencyData.id);
+          setAgencies([
+            { _id: agencyData.id, agencyName: agencyData.agencyName },
+          ]);
+        } else {
+          // Principal: Load all agencies
+          const data = await fetchAgencies();
+          setAgencies(
+            data.map((a) => ({ _id: a._id, agencyName: a.agencyName })),
+          );
+          if (data.length > 0) setSelectedAgencyId(data[0]._id);
+        }
       } catch (err) {
         toast.error("Failed to load agencies");
       }
     };
-    loadAgencies();
-  }, []);
+    loadData();
+  }, [agency]);
 
   // Load offices when agency changes
   useEffect(() => {
@@ -95,6 +121,10 @@ export default function VehiclesTab() {
     const loadOffices = async () => {
       setOfficesLoading(true);
       try {
+        console.log("Loading offices for agency ID:", selectedAgencyId);
+        console.log(
+          "API call will be: /agencies/" + selectedAgencyId + "/offices",
+        );
         const data = await officeService.getOfficesByAgency(selectedAgencyId);
         setOffices(data);
         if (data.length > 0) {
@@ -526,42 +556,48 @@ export default function VehiclesTab() {
 
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
-              <Briefcase size={18} className="text-amber-600" />
-              Select Agency
-            </label>
-            <Select
-              showSearch
-              placeholder="Choose an agency..."
-              value={selectedAgencyId || undefined}
-              onChange={setSelectedAgencyId}
-              className="w-full"
-              filterOption={(input, option) =>
-                ((option as any)?.agencyName || "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-              optionLabelProp="label"
-              options={agencies.map((a) => ({
-                value: a._id,
-                agencyName: a.agencyName,
-                label: (
-                  <div className="flex items-center gap-2">
-                    <Briefcase size={16} className="text-amber-600" />
-                    {a.agencyName}
-                  </div>
-                ),
-              }))}
-              size="large"
-              status={selectedAgencyId ? "success" : undefined}
-              style={{
-                borderRadius: "0.875rem",
-              }}
-            />
-          </div>
+          {/* Agency Selector - Only for Principals */}
+          {agency?.role !== "FLEET_MANAGER" && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
+                <Briefcase size={18} className="text-amber-600" />
+                Select Agency
+              </label>
+              <Select
+                showSearch
+                placeholder="Choose an agency..."
+                value={selectedAgencyId || undefined}
+                onChange={setSelectedAgencyId}
+                className="w-full"
+                filterOption={(input, option) =>
+                  ((option as any)?.agencyName || "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                optionLabelProp="label"
+                options={agencies.map((a) => ({
+                  value: a._id,
+                  agencyName: a.agencyName,
+                  label: (
+                    <div className="flex items-center gap-2">
+                      <Briefcase size={16} className="text-amber-600" />
+                      {a.agencyName}
+                    </div>
+                  ),
+                }))}
+                size="large"
+                status={selectedAgencyId ? "success" : undefined}
+                style={{
+                  borderRadius: "0.875rem",
+                }}
+              />
+            </div>
+          )}
 
-          <div>
+          {/* Office Selector - Always visible */}
+          <div
+            className={agency?.role === "FLEET_MANAGER" ? "md:col-span-2" : ""}
+          >
             <label className="block text-sm font-semibold text-gray-800 mb-2.5 flex items-center gap-2">
               <Building size={18} className="text-blue-600" />
               Select Office
@@ -570,7 +606,9 @@ export default function VehiclesTab() {
               showSearch
               placeholder={
                 !selectedAgencyId
-                  ? "Select an agency first..."
+                  ? agency?.role === "FLEET_MANAGER"
+                    ? "Loading offices..."
+                    : "Select an agency first..."
                   : officesLoading
                     ? "Loading offices..."
                     : "Choose an office..."
